@@ -2,8 +2,8 @@
  * @fileoverview Mock adapter for testing and development
  */
 
-import type { StyleAdapter, Theme } from '../../types/styling';
-import { defaultTheme } from '../../types/styling';
+import type { StyleAdapter, Theme } from '../../src/types/styling';
+import { defaultTheme } from '../../src/types/styling';
 
 /**
  * Mock adapter that simulates different styling system behaviors

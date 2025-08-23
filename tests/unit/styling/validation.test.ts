@@ -9,7 +9,7 @@ import {
   validateAdapterName,
   hasCapability
 } from '../../../src/styling/validation';
-import { createMockAdapter } from '../../../src/styling/adapters/mock-adapter';
+import { createMockAdapter } from '../../__mocks__/mock-style-adapter';
 import { baseAdapter } from '../../../src/styling/adapters/base-adapter';
 
 describe('validateAdapter', () => {

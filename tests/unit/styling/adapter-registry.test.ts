@@ -3,7 +3,7 @@
  */
 
 import { AdapterRegistry, adapterRegistry, registerAdapter, getAdapter } from '../../../src/styling/adapter-registry';
-import { createMockAdapter } from '../../../src/styling/adapters/mock-adapter';
+import { createMockAdapter } from '../../__mocks__/mock-style-adapter';
 
 describe('AdapterRegistry', () => {
   let registry: AdapterRegistry;

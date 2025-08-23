@@ -3,4 +3,3 @@
  */
 
 export * from './base-adapter';
-export * from './mock-adapter';

@@ -43,7 +43,7 @@ Framework-agnostic styling with adapter pattern:
 - **Adapter registry** for dynamic styling system management
 - **Capabilities detection** (responsive, animations, variants, dark mode)
 - **Validation & testing** utilities for adapter development
-- **Built-in adapters** (BaseStyleAdapter, MockStyleAdapter)
+- **Built-in adapters** (BaseStyleAdapter for production, MockStyleAdapter for testing)
 
 ## Architecture Principles
 
