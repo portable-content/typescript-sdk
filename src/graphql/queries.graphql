@@ -1,0 +1,21 @@
+# GraphQL queries for the Portable Content API
+# TODO: Add queries in Task 3A
+
+# Example query structure:
+# query GetContent($id: ID!, $capabilities: CapabilitiesInput!) {
+#   content(id: $id, capabilities: $capabilities) {
+#     id
+#     title
+#     summary
+#     blocks {
+#       id
+#       kind
+#       variants {
+#         mediaType
+#         uri
+#         width
+#         height
+#       }
+#     }
+#   }
+# }
