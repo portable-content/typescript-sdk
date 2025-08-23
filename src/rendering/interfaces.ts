@@ -7,7 +7,7 @@ import { Block, Capabilities } from '../types';
 /**
  * Interface for block renderers
  */
-export interface BlockRenderer<TProps = any> {
+export interface BlockRenderer<TProps = Record<string, unknown>> {
   /** Block kind this renderer handles */
   kind: string;
 
@@ -15,7 +15,7 @@ export interface BlockRenderer<TProps = any> {
   canRender(block: Block, capabilities: Capabilities): boolean;
 
   /** Render the block with given props */
-  render(block: Block, props: TProps): any;
+  render(block: Block, props: TProps): unknown;
 }
 
 /**
@@ -29,7 +29,7 @@ export interface RendererRegistry {
   getRenderer(kind: string): BlockRenderer | null;
 
   /** Render a block using the appropriate renderer */
-  renderBlock(block: Block, capabilities: Capabilities): any;
+  renderBlock(block: Block, capabilities: Capabilities): unknown;
 }
 
 /**
@@ -37,7 +37,7 @@ export interface RendererRegistry {
  */
 export interface ProcessedContent {
   /** Original content item */
-  original: any;
+  original: Block;
   /** Processed blocks with selected variants */
   blocks: ProcessedBlock[];
   /** Applied capabilities */
@@ -51,7 +51,7 @@ export interface ProcessedBlock {
   /** Original block */
   original: Block;
   /** Selected variant for rendering */
-  selectedVariant: any;
+  selectedVariant: import('../types').Variant;
   /** Processing metadata */
   metadata: {
     processingTime: number;

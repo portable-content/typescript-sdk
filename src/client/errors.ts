@@ -57,7 +57,7 @@ export class ContentNotFoundError extends PortableContentError {
 export class ValidationError extends PortableContentError {
   constructor(
     message: string,
-    public readonly details?: any
+    public readonly details?: Record<string, unknown>
   ) {
     super(message, 'VALIDATION_ERROR');
     this.name = 'ValidationError';

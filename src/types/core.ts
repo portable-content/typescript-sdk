@@ -3,36 +3,36 @@
  */
 
 /**
- * Represents a complete content item with metadata and blocks
+ * Core content item representing a piece of portable content
  */
 export interface ContentItem {
   /** Unique identifier for the content item */
   id: string;
-  /** Content type identifier */
+  /** Content type (e.g., 'note', 'article', 'document') */
   type: string;
-  /** Optional title for the content */
+  /** Optional human-readable title */
   title?: string;
   /** Optional summary or description */
   summary?: string;
-  /** Array of content blocks */
+  /** Array of content blocks that make up this item */
   blocks: Block[];
-  /** Optional representations for different formats */
+  /** Named representations defining which blocks to include */
   representations?: Record<string, Representation>;
-  /** Creation timestamp */
+  /** ISO 8601 timestamp when this item was created */
   createdAt?: string;
-  /** Last update timestamp */
+  /** ISO 8601 timestamp when this item was last updated */
   updatedAt?: string;
-  /** Creator identifier */
+  /** Identifier of the user/system that created this item */
   createdBy?: string;
 }
 
 /**
- * Represents a single content block with variants
+ * Base interface for all content blocks
  */
 export interface Block {
   /** Unique identifier for the block */
   id: string;
-  /** Block type/kind identifier */
+  /** Block type identifier (e.g., 'markdown', 'mermaid', 'image') */
   kind: string;
   /** Block-specific payload data */
   payload: unknown;
@@ -41,41 +41,35 @@ export interface Block {
 }
 
 /**
- * Represents a specific variant of a block
+ * Represents a specific variant of a block (e.g., different formats, sizes)
  */
 export interface Variant {
-  /** MIME type of the variant */
+  /** MIME type of this variant (e.g., 'text/html', 'image/png') */
   mediaType: string;
-  /** Optional URI for accessing the variant */
+  /** Optional URI where this variant can be accessed */
   uri?: string;
-  /** Optional width in pixels */
+  /** Optional width in pixels (for visual content) */
   width?: number;
-  /** Optional height in pixels */
+  /** Optional height in pixels (for visual content) */
   height?: number;
   /** Optional size in bytes */
   bytes?: number;
-  /** Optional content hash for integrity */
+  /** Optional content hash for integrity verification */
   contentHash?: string;
-  /** Optional generator tool identifier */
+  /** Optional identifier of the tool that generated this variant */
   generatedBy?: string;
-  /** Optional tool version */
+  /** Optional version of the tool that generated this variant */
   toolVersion?: string;
-  /** Creation timestamp */
+  /** ISO 8601 timestamp when this variant was created */
   createdAt?: string;
 }
 
 /**
- * Represents a content representation (e.g., PDF, EPUB)
+ * Named representation defining which blocks to include
  */
 export interface Representation {
-  /** MIME type of the representation */
-  mediaType: string;
-  /** URI for accessing the representation */
-  uri: string;
-  /** Optional size in bytes */
-  bytes?: number;
-  /** Optional content hash for integrity */
-  contentHash?: string;
-  /** Creation timestamp */
-  createdAt?: string;
+  /** Array of block IDs to include in this representation */
+  blocks: string[];
+  /** Optional metadata for the representation */
+  metadata?: Record<string, unknown>;
 }

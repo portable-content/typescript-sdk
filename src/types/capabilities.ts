@@ -6,9 +6,9 @@
  * Client capabilities for content negotiation
  */
 export interface Capabilities {
-  /** Array of accepted MIME types */
+  /** Array of accepted media types (with optional quality values) */
   accept: string[];
-  /** Optional capability hints */
+  /** Optional hints about client preferences */
   hints?: CapabilityHints;
 }
 
@@ -20,16 +20,16 @@ export interface CapabilityHints {
   width?: number;
   /** Preferred viewport height in pixels */
   height?: number;
-  /** Display density (e.g., 1.0, 2.0, 3.0) */
+  /** Display pixel density (e.g., 1.0, 2.0, 3.0) */
   density?: number;
-  /** Network condition hint */
-  network?: NetworkCondition;
+  /** Network connection type hint */
+  network?: NetworkType;
 }
 
 /**
- * Network condition types
+ * Network connection types for optimization hints
  */
-export type NetworkCondition = 'FAST' | 'SLOW' | 'CELLULAR';
+export type NetworkType = 'FAST' | 'SLOW' | 'CELLULAR';
 
 /**
  * Default capabilities for common scenarios

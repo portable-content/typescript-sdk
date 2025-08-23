@@ -11,7 +11,7 @@ export interface GraphQLClient {
   /**
    * Execute a GraphQL request
    */
-  request<T = any, V = any>(
+  request<T = unknown, V = Record<string, unknown>>(
     document: string,
     variables?: V,
     requestHeaders?: Record<string, string>
@@ -21,7 +21,7 @@ export interface GraphQLClient {
 /**
  * GraphQL response wrapper
  */
-export interface GraphQLResponse<T = any> {
+export interface GraphQLResponse<T = unknown> {
   /** Response data */
   data?: T;
   /** GraphQL errors */
