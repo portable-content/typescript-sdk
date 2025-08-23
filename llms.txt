@@ -1,0 +1,162 @@
+# Portable Content TypeScript SDK
+
+> Framework-agnostic TypeScript SDK for intelligent content rendering and variant selection
+
+## Overview
+
+The Portable Content TypeScript SDK provides a complete framework-agnostic foundation for rendering content across different platforms (React Native, Vue, React Web, etc.). The core innovation is intelligent variant selection that automatically chooses optimal content variants based on client capabilities, network conditions, and device characteristics.
+
+## Key Components
+
+### 1. Variant Selection Engine (`VariantSelector`)
+Intelligently selects the best content variant from available options:
+- **Media type matching** with wildcard support (`image/*`, `*/*`)
+- **Quality scoring** based on Accept headers with q-values
+- **Format preferences** for modern formats (AVIF > WebP > JPEG)
+- **Network optimization** (smaller files on slow/cellular networks)
+- **Device awareness** (high-res variants for high-density displays)
+
+### 2. Renderer System
+Framework-agnostic rendering infrastructure:
+- **BlockRenderer interface** with priority-based selection
+- **RendererRegistry** for managing multiple renderers per block type
+- **RenderContext** for passing capabilities and callbacks
+- **Base renderer classes** for common functionality
+
+### 3. Content Processing
+Content optimization before rendering:
+- **Variant optimization** with fallback selection
+- **Representation filtering** for different views (summary, full, etc.)
+- **Block-level processing** with individual optimization
+
+### 4. Capability Detection
+Automatic client capability detection:
+- **Media format support** (WebP, AVIF, SVG detection)
+- **Screen characteristics** (dimensions, pixel density)
+- **Network conditions** (4G=FAST, 3G=SLOW, 2G=CELLULAR)
+- **Server-side safe** with appropriate fallbacks
+
+## Architecture Principles
+
+1. **Framework Independence**: No UI framework dependencies
+2. **Mock-First Development**: Works without backend dependencies
+3. **Extensible Design**: Easy to add new block types and renderers
+4. **Type Safety**: Full TypeScript support with strict checking
+5. **Performance Focus**: Efficient algorithms, minimal bundle size
+
+## Usage Patterns
+
+### Basic Variant Selection
+```typescript
+import { VariantSelector, CapabilityDetector } from '@portable-content/typescript-sdk';
+
+const detector = new CapabilityDetector();
+const capabilities = detector.detectCapabilities();
+
+const selector = new VariantSelector();
+const bestVariant = selector.selectBestVariant(block.variants, capabilities);
+```
+
+### Custom Renderer Implementation
+```typescript
+import { BaseBlockRenderer } from '@portable-content/typescript-sdk';
+
+class MyRenderer extends BaseBlockRenderer {
+  readonly kind = 'markdown';
+  readonly priority = 1;
+
+  async render(block, props, context) {
+    const variant = this.selectVariant(block, context);
+    return {
+      content: renderWithMyFramework(variant),
+      variant
+    };
+  }
+}
+```
+
+### Content Processing
+```typescript
+import { DefaultContentProcessor } from '@portable-content/typescript-sdk';
+
+const processor = new DefaultContentProcessor();
+const optimized = await processor.processContent(content, capabilities);
+// Each block now has optimal variants selected
+```
+
+## Data Models
+
+### Core Types
+- **ContentItem**: Top-level content with blocks and representations
+- **Block**: Individual content block with variants and payload
+- **Variant**: Specific representation (media type, URI, dimensions, size)
+- **Capabilities**: Client capabilities (accept types, hints)
+
+### Rendering Types
+- **RenderContext**: Context passed to renderers (capabilities, callbacks)
+- **RenderResult**: Result of rendering (content, variant, metadata, errors)
+- **BlockRenderer**: Interface for block renderers
+
+## Testing
+
+Comprehensive test suite with 123+ tests:
+- **Unit tests** for all components
+- **Integration tests** for end-to-end scenarios
+- **MockContentFactory** for generating test data
+- **Edge case coverage** and error handling
+
+## Framework Integration
+
+The SDK is designed to work with any UI framework:
+
+### React Native
+```typescript
+class ReactNativeImageRenderer extends BaseImageRenderer {
+  async render(block, props, context) {
+    const variant = this.selectVariant(block, context);
+    return {
+      content: <Image source={{ uri: variant.uri }} {...props} />,
+      variant
+    };
+  }
+}
+```
+
+### Vue
+```typescript
+class VueMarkdownRenderer extends BaseTextRenderer {
+  async render(block, props, context) {
+    const variant = this.selectVariant(block, context);
+    const text = await this.getTextContent(variant);
+    return {
+      content: h('div', { innerHTML: renderMarkdown(text) }),
+      variant
+    };
+  }
+}
+```
+
+## Performance Characteristics
+
+- **Efficient variant selection**: O(n) algorithm with smart scoring
+- **Network-aware**: Automatically optimizes for connection speed
+- **Minimal bundle size**: Tree-shakeable with no UI dependencies
+- **Memory efficient**: Processes content in streaming fashion
+- **Cache-friendly**: Deterministic variant selection for consistent caching
+
+## Development Workflow
+
+1. **Mock-first development**: Use MockContentFactory for testing
+2. **Type-safe**: Full TypeScript support with strict checking
+3. **Test-driven**: Comprehensive test suite with high coverage
+4. **Lint-enforced**: ESLint + Prettier for code quality
+5. **Build-optimized**: Rollup for efficient bundling
+
+## Extension Points
+
+- **Custom block types**: Implement BlockRenderer interface
+- **Custom capability detection**: Extend CapabilityDetector
+- **Custom content processing**: Extend ContentProcessor
+- **Custom variant selection**: Extend VariantSelector
+
+This SDK provides the foundation for building content rendering systems that automatically adapt to client capabilities and deliver optimal user experiences across all platforms.
