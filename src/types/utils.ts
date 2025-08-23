@@ -14,8 +14,8 @@ export type PayloadForKind<K extends keyof BlockTypeMap> = BlockTypeMap[K]['payl
 /**
  * Utility type for unknown block kinds (fallback)
  */
-export type PayloadForUnknownKind<K extends string> = K extends keyof BlockTypeMap 
-  ? PayloadForKind<K> 
+export type PayloadForUnknownKind<K extends string> = K extends keyof BlockTypeMap
+  ? PayloadForKind<K>
   : unknown;
 
 /**
@@ -31,7 +31,7 @@ export type PartialContentItem = Partial<Omit<ContentItem, 'id' | 'blocks'>> & {
  */
 export class ContentItemBuilder {
   private item: Partial<ContentItem> = {
-    blocks: []
+    blocks: [],
   };
 
   constructor(id: string, type: string) {
@@ -57,7 +57,7 @@ export class ContentItemBuilder {
   addRepresentation(name: string, representation: import('./core').Representation): this {
     this.item.representations = {
       ...this.item.representations,
-      [name]: representation
+      [name]: representation,
     };
     return this;
   }
@@ -73,7 +73,7 @@ export class ContentItemBuilder {
       ...this.item,
       blocks: this.item.blocks || [],
       createdAt: this.item.createdAt || now,
-      updatedAt: this.item.updatedAt || now
+      updatedAt: this.item.updatedAt || now,
     } as ContentItem;
   }
 }
@@ -84,7 +84,7 @@ export class ContentItemBuilder {
  */
 export class BlockBuilder<K extends string> {
   private block: Partial<Block> = {
-    variants: []
+    variants: [],
   };
 
   constructor(id: string, kind: K) {
@@ -150,7 +150,7 @@ export class VariantBuilder {
     const now = new Date().toISOString();
     return {
       ...this.variant,
-      createdAt: this.variant.createdAt || now
+      createdAt: this.variant.createdAt || now,
     } as Variant;
   }
 }

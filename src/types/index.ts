@@ -3,12 +3,7 @@
  */
 
 // Core types
-export type {
-  ContentItem,
-  Block,
-  Variant,
-  Representation
-} from './core';
+export type { ContentItem, Block, Variant, Representation } from './core';
 
 // Block-specific types
 export type {
@@ -19,7 +14,7 @@ export type {
   MermaidBlock,
   ImageBlock,
   BlockTypeMap,
-  TypedBlock
+  TypedBlock,
 } from './blocks';
 
 // Block type guards and utilities
@@ -28,27 +23,15 @@ export {
   isMermaidBlock,
   isImageBlock,
   getTypedPayload,
-  getKnownPayload
+  getKnownPayload,
 } from './blocks';
 
 // Capability types
-export type {
-  Capabilities,
-  CapabilityHints,
-  NetworkType
-} from './capabilities';
+export type { Capabilities, CapabilityHints, NetworkType } from './capabilities';
 
 export { DEFAULT_CAPABILITIES } from './capabilities';
 
 // Utility types and builders
-export type {
-  PayloadForKind,
-  PayloadForUnknownKind,
-  PartialContentItem
-} from './utils';
+export type { PayloadForKind, PayloadForUnknownKind, PartialContentItem } from './utils';
 
-export {
-  ContentItemBuilder,
-  BlockBuilder,
-  VariantBuilder
-} from './utils';
+export { ContentItemBuilder, BlockBuilder, VariantBuilder } from './utils';

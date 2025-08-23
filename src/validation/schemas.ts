@@ -22,16 +22,18 @@ export const VariantSchema = z.object({
 /**
  * Schema for Block interface
  */
-export const BlockSchema = z.object({
-  id: z.string().min(1, 'Block ID is required'),
-  kind: z.string().min(1, 'Block kind is required'),
-  payload: z.unknown(),
-  variants: z.array(VariantSchema).default([]),
-}).transform((data) => ({
-  ...data,
-  // Ensure payload is always present, even if undefined
-  payload: data.payload ?? null,
-}));
+export const BlockSchema = z
+  .object({
+    id: z.string().min(1, 'Block ID is required'),
+    kind: z.string().min(1, 'Block kind is required'),
+    payload: z.unknown(),
+    variants: z.array(VariantSchema).default([]),
+  })
+  .transform((data) => ({
+    ...data,
+    // Ensure payload is always present, even if undefined
+    payload: data.payload ?? null,
+  }));
 
 /**
  * Schema for Representation interface
@@ -86,10 +88,12 @@ export const ImageBlockPayloadSchema = z.object({
  */
 export const CapabilitiesSchema = z.object({
   accept: z.array(z.string().min(1)).min(1, 'At least one accepted media type is required'),
-  hints: z.object({
-    width: z.number().int().positive().optional(),
-    height: z.number().int().positive().optional(),
-    density: z.number().positive().optional(),
-    network: z.enum(['FAST', 'SLOW', 'CELLULAR']).optional(),
-  }).optional(),
+  hints: z
+    .object({
+      width: z.number().int().positive().optional(),
+      height: z.number().int().positive().optional(),
+      density: z.number().positive().optional(),
+      network: z.enum(['FAST', 'SLOW', 'CELLULAR']).optional(),
+    })
+    .optional(),
 });

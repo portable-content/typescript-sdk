@@ -42,7 +42,7 @@ export function validateContentItem(data: unknown): ValidationResult<ContentItem
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        errors: error.errors.map(e => `${e.path.join('.')}: ${e.message}`),
+        errors: error.errors.map((e) => `${e.path.join('.')}: ${e.message}`),
       };
     }
     return { success: false, errors: ['Unknown validation error'] };
@@ -60,7 +60,7 @@ export function validateBlock(data: unknown): ValidationResult<Block> {
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        errors: error.errors.map(e => `${e.path.join('.')}: ${e.message}`),
+        errors: error.errors.map((e) => `${e.path.join('.')}: ${e.message}`),
       };
     }
     return { success: false, errors: ['Unknown validation error'] };
@@ -78,7 +78,7 @@ export function validateVariant(data: unknown): ValidationResult<Variant> {
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        errors: error.errors.map(e => `${e.path.join('.')}: ${e.message}`),
+        errors: error.errors.map((e) => `${e.path.join('.')}: ${e.message}`),
       };
     }
     return { success: false, errors: ['Unknown validation error'] };
@@ -96,7 +96,7 @@ export function validateCapabilities(data: unknown): ValidationResult<Capabiliti
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        errors: error.errors.map(e => `${e.path.join('.')}: ${e.message}`),
+        errors: error.errors.map((e) => `${e.path.join('.')}: ${e.message}`),
       };
     }
     return { success: false, errors: ['Unknown validation error'] };
@@ -152,7 +152,7 @@ export function validateBlockPayload(kind: string, payload: unknown): Validation
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        errors: error.errors.map(e => `${e.path.join('.')}: ${e.message}`),
+        errors: error.errors.map((e) => `${e.path.join('.')}: ${e.message}`),
       };
     }
     return { success: false, errors: ['Unknown validation error'] };
