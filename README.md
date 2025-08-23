@@ -134,6 +134,16 @@ This SDK is designed with a modular, framework-agnostic architecture:
 - **Performance Focused**: Efficient algorithms and minimal bundle size
 - **Type Safety**: Full TypeScript support with strict checking
 
+## What's New in v0.2.0
+
+🎨 **Universal Styling System** - Framework-agnostic styling with adapter pattern
+
+- ✅ **StyleAdapter Interface**: Works with any styling system (CSS-in-JS, utility frameworks, native styling)
+- ✅ **Universal Theme System**: Design tokens with colors, spacing, typography, shadows
+- ✅ **Comprehensive Documentation**: Step-by-step guides for any framework or styling system
+- ✅ **224 Tests**: Extensive test coverage including edge cases and styling system
+- ✅ **Production Ready**: Robust validation, error handling, and performance optimization
+
 ## What's New in v0.1.0
 
 🎉 **Initial Release** - Complete framework-agnostic rendering system
