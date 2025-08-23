@@ -212,4 +212,67 @@ describe('VariantSelector', () => {
       expect(selected).not.toBeNull();
     });
   });
+
+  describe('selectFallbackVariant edge cases', () => {
+    it('should return first variant when no accessible variants exist', () => {
+      const variants: Variant[] = [
+        { mediaType: 'image/png', bytes: 100000 }, // No URI
+        { mediaType: 'image/jpeg', bytes: 200000 } // No URI
+      ];
+
+      const capabilities: Capabilities = {
+        accept: ['text/plain'] // No matching media types
+      };
+
+      const selected = selector.selectBestVariant(variants, capabilities);
+      expect(selected).toBe(variants[0]); // Should return first variant as fallback
+    });
+
+    it('should handle accessible variants without bytes', () => {
+      const variants: Variant[] = [
+        { mediaType: 'image/png', uri: 'test1.png' }, // Has URI but no bytes
+        { mediaType: 'image/jpeg', uri: 'test2.jpg' } // Has URI but no bytes
+      ];
+
+      const capabilities: Capabilities = {
+        accept: ['text/plain'] // No matching media types
+      };
+
+      const selected = selector.selectBestVariant(variants, capabilities);
+      expect(selected).toBe(variants[0]); // Should return first accessible variant
+    });
+  });
+
+  describe('mediaTypeMatches edge cases', () => {
+    it('should match catch-all media type', () => {
+      const variants: Variant[] = [
+        { mediaType: 'application/custom', bytes: 100000, uri: 'test.custom' }
+      ];
+
+      const capabilities: Capabilities = {
+        accept: ['*/*'] // Catch-all
+      };
+
+      const selected = selector.selectBestVariant(variants, capabilities);
+      expect(selected).not.toBeNull();
+      expect(selected?.mediaType).toBe('application/custom');
+    });
+  });
+
+  describe('scoreForNetwork edge cases', () => {
+    it('should handle unknown network types', () => {
+      const variants: Variant[] = [
+        { mediaType: 'image/png', bytes: 1000000, uri: 'test.png' }
+      ];
+
+      const capabilities: Capabilities = {
+        accept: ['image/png'],
+        hints: { network: 'UNKNOWN' as any } // Unknown network type to test default case
+      };
+
+      const selected = selector.selectBestVariant(variants, capabilities);
+      expect(selected).not.toBeNull();
+      // Should still work with default network scoring
+    });
+  });
 });

@@ -258,6 +258,15 @@ describe('CapabilityDetector', () => {
       const capabilities = detector.detectCapabilities();
       expect(capabilities.hints?.network).toBe('FAST');
     });
+
+    it('should default to FAST for unknown effectiveType', () => {
+      global.navigator = {
+        connection: { effectiveType: '5g' } // Unknown/future network type
+      } as any;
+
+      const capabilities = detector.detectCapabilities();
+      expect(capabilities.hints?.network).toBe('FAST');
+    });
   });
 
   describe('interactive capability detection', () => {

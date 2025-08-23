@@ -119,6 +119,19 @@ describe('DefaultRendererRegistry', () => {
       expect(() => registry.unregister('markdown', 999)).not.toThrow();
       expect(registry.getRenderers('markdown')).toHaveLength(2); // No change
     });
+
+    it('should remove kind when unregistering last renderer by priority', () => {
+      // Register only one renderer for a new kind
+      registry.register(new MockRenderer('video', 1));
+      expect(registry.canRender('video')).toBe(true);
+
+      // Unregister the only renderer by priority
+      registry.unregister('video', 1);
+
+      // Kind should be completely removed
+      expect(registry.canRender('video')).toBe(false);
+      expect(registry.getRenderers('video')).toHaveLength(0);
+    });
   });
 
   describe('getRenderer', () => {
