@@ -36,6 +36,15 @@ Automatic client capability detection:
 - **Network conditions** (4G=FAST, 3G=SLOW, 2G=CELLULAR)
 - **Server-side safe** with appropriate fallbacks
 
+### 5. Universal Styling System (v0.2.0+)
+Framework-agnostic styling with adapter pattern:
+- **StyleAdapter interface** for any styling system (CSS-in-JS, utility frameworks, native styling)
+- **Universal theme system** with design tokens (colors, spacing, typography, shadows)
+- **Adapter registry** for dynamic styling system management
+- **Capabilities detection** (responsive, animations, variants, dark mode)
+- **Validation & testing** utilities for adapter development
+- **Built-in adapters** (BaseStyleAdapter, MockStyleAdapter)
+
 ## Architecture Principles
 
 1. **Framework Independence**: No UI framework dependencies
@@ -43,6 +52,8 @@ Automatic client capability detection:
 3. **Extensible Design**: Easy to add new block types and renderers
 4. **Type Safety**: Full TypeScript support with strict checking
 5. **Performance Focus**: Efficient algorithms, minimal bundle size
+6. **Styling System Agnostic**: Works with any styling approach via adapters
+7. **Three-Layer Architecture**: SDK → Framework Renderers → Styling Adapters
 
 ## Usage Patterns
 
@@ -71,6 +82,27 @@ class MyRenderer extends BaseBlockRenderer {
       content: renderWithMyFramework(variant),
       variant
     };
+  }
+}
+```
+
+### Style Adapter Implementation
+```typescript
+import { StyleAdapter, Theme } from '@portable-content/typescript-sdk';
+
+class MyStyleAdapter implements StyleAdapter {
+  name = 'my-adapter';
+  theme: Theme;
+  capabilities = { responsive: true, animations: false };
+
+  createStyles(styleDefinition: any): any {
+    // Convert generic styles to your system's format
+    return convertToMySystem(styleDefinition, this.theme);
+  }
+
+  combineStyles(...styles: any[]): any {
+    // Merge multiple styles
+    return mergeStyles(styles);
   }
 }
 ```
@@ -158,5 +190,16 @@ class VueMarkdownRenderer extends BaseTextRenderer {
 - **Custom capability detection**: Extend CapabilityDetector
 - **Custom content processing**: Extend ContentProcessor
 - **Custom variant selection**: Extend VariantSelector
+- **Custom styling systems**: Implement StyleAdapter interface
+- **Framework renderers**: Build renderers for any UI framework using adapters
+
+## Documentation
+
+Comprehensive guides available in `/docs`:
+- **STYLING_SYSTEM.md**: Complete styling system documentation
+- **ADAPTER_IMPLEMENTATION_GUIDE.md**: Step-by-step adapter creation
+- **INTEGRATION_GUIDE.md**: Renderer and adapter integration patterns
+- **COMPLETE_EXAMPLE.md**: Full working example with styled-components
+- **RENDERER_GUIDE.md**: Framework-specific renderer implementation
 
 This SDK provides the foundation for building content rendering systems that automatically adapt to client capabilities and deliver optimal user experiences across all platforms.

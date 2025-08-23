@@ -13,29 +13,29 @@ import { BaseBlockRenderer } from '@portable-content/typescript-sdk';
 import type { Block, RenderContext, RenderResult } from '@portable-content/typescript-sdk';
 
 class MyCustomRenderer extends BaseBlockRenderer<MyProps, MyResult> {
-  readonly kind = 'my-block-type';  // Block type this renderer handles
-  readonly priority = 1;            // Higher priority = preferred renderer
+  readonly kind = 'my-block-type'; // Block type this renderer handles
+  readonly priority = 1; // Higher priority = preferred renderer
 
   async render(
-    block: Block, 
-    props: MyProps, 
+    block: Block,
+    props: MyProps,
     context: RenderContext
   ): Promise<RenderResult<MyResult>> {
     // 1. Select best variant for client capabilities
     const variant = this.selectVariant(block, context);
-    
+
     if (!variant) {
       return { content: null, variant: null, errors: ['No suitable variant'] };
     }
 
     // 2. Render using your framework
     const content = renderWithMyFramework(variant, props);
-    
+
     // 3. Return result
     return {
       content,
       variant,
-      metadata: { renderTime: Date.now() }
+      metadata: { renderTime: Date.now() },
     };
   }
 }
@@ -61,6 +61,7 @@ if (renderer) {
 ### BaseBlockRenderer
 
 The foundation class for all renderers. Provides:
+
 - Variant selection logic
 - Error handling utilities
 - Loading state management
@@ -76,7 +77,7 @@ class GenericRenderer extends BaseBlockRenderer<Props, Result> {
   async render(block, props, context) {
     // Automatic variant selection
     const variant = this.selectVariant(block, context);
-    
+
     // Error handling
     try {
       const content = await processVariant(variant);
@@ -102,17 +103,17 @@ class MarkdownRenderer extends BaseTextRenderer<MarkdownProps, HTMLElement> {
 
   async render(block, props, context) {
     const variant = this.selectVariant(block, context);
-    
+
     // Built-in text fetching
     const markdownText = await this.getTextContent(variant);
-    
+
     // Render with your markdown processor
     const html = renderMarkdown(markdownText, props.theme);
-    
+
     return {
       content: createHTMLElement(html),
       variant,
-      metadata: { wordCount: markdownText.split(' ').length }
+      metadata: { wordCount: markdownText.split(' ').length },
     };
   }
 }
@@ -131,27 +132,27 @@ class ResponsiveImageRenderer extends BaseImageRenderer<ImageProps, ImageElement
 
   async render(block, props, context) {
     const variant = this.selectVariant(block, context);
-    
+
     // Check if it's actually an image
     if (!this.isImageVariant(variant)) {
       return { content: null, variant, errors: ['Not an image variant'] };
     }
-    
+
     // Get dimensions
     const { width, height } = this.getImageDimensions(variant);
-    
+
     // Create responsive image
     const img = createImageElement({
       src: variant.uri,
       alt: props.alt,
       width: Math.min(width, context.capabilities.hints?.width || width),
-      height: Math.min(height, context.capabilities.hints?.height || height)
+      height: Math.min(height, context.capabilities.hints?.height || height),
     });
-    
+
     return {
       content: img,
       variant,
-      metadata: { originalWidth: width, originalHeight: height }
+      metadata: { originalWidth: width, originalHeight: height },
     };
   }
 }
@@ -172,7 +173,7 @@ class ReactNativeImageRenderer extends BaseImageRenderer<ImageProps, React.React
 
   async render(block, props, context) {
     const variant = this.selectVariant(block, context);
-    
+
     if (!variant || !this.isImageVariant(variant)) {
       return {
         content: <Text>Image not available</Text>,
@@ -183,7 +184,7 @@ class ReactNativeImageRenderer extends BaseImageRenderer<ImageProps, React.React
 
     const { width, height } = this.getImageDimensions(variant);
     const screenWidth = context.capabilities.hints?.width || 375;
-    
+
     // Responsive sizing
     const aspectRatio = width && height ? width / height : 1;
     const displayWidth = Math.min(width || screenWidth, screenWidth - 32);
@@ -227,32 +228,32 @@ class VueMarkdownRenderer extends BaseTextRenderer<MarkdownProps, any> {
 
   async render(block, props, context) {
     const variant = this.selectVariant(block, context);
-    
+
     if (!variant) {
       return {
         content: h('div', { class: 'error' }, 'Content not available'),
-        variant: null
+        variant: null,
       };
     }
 
     try {
       const markdown = await this.getTextContent(variant);
       const html = await renderMarkdownToHTML(markdown);
-      
+
       return {
         content: h('div', {
           class: ['markdown-content', props.theme],
-          innerHTML: html
+          innerHTML: html,
         }),
         variant,
-        metadata: { length: markdown.length }
+        metadata: { length: markdown.length },
       };
     } catch (error) {
       this.handleError(error, context);
       return {
         content: h('div', { class: 'error' }, 'Failed to load content'),
         variant,
-        errors: [error.message]
+        errors: [error.message],
       };
     }
   }
@@ -271,7 +272,7 @@ class ReactMermaidRenderer extends BaseBlockRenderer<MermaidProps, React.ReactEl
 
   async render(block, props, context) {
     const variant = this.selectVariant(block, context);
-    
+
     if (!variant) {
       return {
         content: <div className="error">Diagram not available</div>,
@@ -281,13 +282,13 @@ class ReactMermaidRenderer extends BaseBlockRenderer<MermaidProps, React.ReactEl
 
     // Prefer SVG variant for web
     const svgVariant = block.variants.find(v => v.mediaType === 'image/svg+xml') || variant;
-    
+
     if (svgVariant.mediaType === 'image/svg+xml') {
       return {
         content: (
           <div className={`mermaid-diagram ${props.theme}`}>
-            <img 
-              src={svgVariant.uri} 
+            <img
+              src={svgVariant.uri}
               alt="Mermaid diagram"
               style={{ maxWidth: '100%', height: 'auto' }}
             />
@@ -299,10 +300,10 @@ class ReactMermaidRenderer extends BaseBlockRenderer<MermaidProps, React.ReactEl
 
     // Fallback to rendering from source
     const source = block.payload?.source || await this.getTextContent(variant);
-    
+
     return {
       content: (
-        <div 
+        <div
           className={`mermaid ${props.theme}`}
           data-source={source}
         >
@@ -329,8 +330,7 @@ class HighQualityRenderer extends BaseBlockRenderer {
   readonly priority = 10;
 
   canRender(block, context) {
-    return super.canRender(block, context) && 
-           context.capabilities.hints?.network === 'FAST';
+    return super.canRender(block, context) && context.capabilities.hints?.network === 'FAST';
   }
 }
 
@@ -338,7 +338,7 @@ class HighQualityRenderer extends BaseBlockRenderer {
 class FallbackRenderer extends BaseBlockRenderer {
   readonly kind = 'video';
   readonly priority = 1;
-  
+
   // Always can render (fallback)
 }
 
@@ -355,9 +355,9 @@ class WebGLRenderer extends BaseBlockRenderer {
 
   canRender(block, context) {
     // Custom capability check
-    const hasWebGL = context.capabilities.hints?.webgl || 
-                     (typeof WebGLRenderingContext !== 'undefined');
-    
+    const hasWebGL =
+      context.capabilities.hints?.webgl || typeof WebGLRenderingContext !== 'undefined';
+
     return super.canRender(block, context) && hasWebGL;
   }
 
@@ -365,11 +365,11 @@ class WebGLRenderer extends BaseBlockRenderer {
     // Render 3D model with WebGL
     const variant = this.selectVariant(block, context);
     const model = await loadModel(variant.uri);
-    
+
     return {
       content: renderWebGLModel(model, props),
       variant,
-      metadata: { triangles: model.triangleCount }
+      metadata: { triangles: model.triangleCount },
     };
   }
 }
@@ -382,23 +382,23 @@ class RobustRenderer extends BaseBlockRenderer {
   async render(block, props, context) {
     // Set loading state
     this.setLoading(true, context);
-    
+
     try {
       const variant = this.selectVariant(block, context);
       const content = await loadAndRenderContent(variant);
-      
+
       this.setLoading(false, context);
-      
+
       return { content, variant };
     } catch (error) {
       this.setLoading(false, context);
       this.handleError(error, context);
-      
+
       // Return fallback content
       return {
         content: createErrorFallback(error.message),
         variant: null,
-        errors: [error.message]
+        errors: [error.message],
       };
     }
   }
@@ -417,14 +417,14 @@ describe('MyRenderer', () => {
   beforeEach(() => {
     renderer = new MyRenderer();
     mockContext = {
-      capabilities: MockContentFactory.createCapabilities('desktop')
+      capabilities: MockContentFactory.createCapabilities('desktop'),
     };
   });
 
   it('should render markdown blocks', async () => {
     const block = MockContentFactory.createMarkdownBlock('# Test');
     const result = await renderer.render(block, {}, mockContext);
-    
+
     expect(result.content).toBeDefined();
     expect(result.variant).toBeDefined();
     expect(result.errors).toBeUndefined();
@@ -433,7 +433,7 @@ describe('MyRenderer', () => {
   it('should handle missing variants gracefully', async () => {
     const block = MockContentFactory.createEdgeCaseBlock('empty-variants');
     const result = await renderer.render(block, {}, mockContext);
-    
+
     expect(result.content).toBeNull();
     expect(result.errors).toContain('No suitable variant');
   });

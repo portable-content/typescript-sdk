@@ -20,5 +20,8 @@ export * from './validation';
 // Utility functions
 export * from './utils';
 
+// Styling utilities
+export * from './styling';
+
 // Version information
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';

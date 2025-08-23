@@ -10,7 +10,7 @@ Intelligently selects the best content variant based on client capabilities.
 
 ```typescript
 class VariantSelector {
-  selectBestVariant(variants: Variant[], capabilities: Capabilities): Variant | null
+  selectBestVariant(variants: Variant[], capabilities: Capabilities): Variant | null;
 }
 ```
 
@@ -19,6 +19,7 @@ class VariantSelector {
 - `selectBestVariant(variants, capabilities)` - Returns the optimal variant or null if none suitable
 
 **Example:**
+
 ```typescript
 const selector = new VariantSelector();
 const best = selector.selectBestVariant(block.variants, capabilities);
@@ -30,11 +31,11 @@ Manages block renderers with priority-based selection.
 
 ```typescript
 class DefaultRendererRegistry implements RendererRegistry {
-  register<TProps, TResult>(renderer: BlockRenderer<TProps, TResult>): void
-  unregister(kind: string, priority?: number): void
-  getRenderer(block: Block, context: RenderContext): BlockRenderer | null
-  getRenderers(kind: string): BlockRenderer[]
-  canRender(kind: string): boolean
+  register<TProps, TResult>(renderer: BlockRenderer<TProps, TResult>): void;
+  unregister(kind: string, priority?: number): void;
+  getRenderer(block: Block, context: RenderContext): BlockRenderer | null;
+  getRenderers(kind: string): BlockRenderer[];
+  canRender(kind: string): boolean;
 }
 ```
 
@@ -52,8 +53,16 @@ Processes content for optimal rendering.
 
 ```typescript
 class DefaultContentProcessor implements ContentProcessor {
-  processContent(content: ContentItem, capabilities: Capabilities, options?: Record<string, unknown>): Promise<ContentItem>
-  processBlock(block: Block, capabilities: Capabilities, options?: Record<string, unknown>): Promise<Block>
+  processContent(
+    content: ContentItem,
+    capabilities: Capabilities,
+    options?: Record<string, unknown>
+  ): Promise<ContentItem>;
+  processBlock(
+    block: Block,
+    capabilities: Capabilities,
+    options?: Record<string, unknown>
+  ): Promise<Block>;
 }
 ```
 
@@ -63,6 +72,7 @@ class DefaultContentProcessor implements ContentProcessor {
 - `processBlock(block, capabilities, options?)` - Process individual block
 
 **Options:**
+
 - `representation: string` - Apply representation filtering
 
 ### CapabilityDetector
@@ -71,7 +81,7 @@ Detects client capabilities automatically.
 
 ```typescript
 class CapabilityDetector {
-  detectCapabilities(): Capabilities
+  detectCapabilities(): Capabilities;
 }
 ```
 
@@ -80,6 +90,7 @@ class CapabilityDetector {
 - `detectCapabilities()` - Returns detected client capabilities
 
 **Detected capabilities:**
+
 - Supported media types (WebP, AVIF, SVG)
 - Screen dimensions and pixel density
 - Network type (FAST, SLOW, CELLULAR)
@@ -92,19 +103,25 @@ class CapabilityDetector {
 Abstract base class for all renderers.
 
 ```typescript
-abstract class BaseBlockRenderer<TProps = unknown, TResult = unknown> implements BlockRenderer<TProps, TResult> {
-  abstract readonly kind: string
-  abstract readonly priority: number
-  
-  abstract render(block: Block, props: TProps, context: RenderContext): Promise<RenderResult<TResult>>
-  
-  canRender(block: Block, context: RenderContext): boolean
-  getDefaultProps(): Partial<TProps>
-  validateProps(props: TProps): string[]
-  
-  protected selectVariant(block: Block, context: RenderContext): Variant | null
-  protected handleError(error: Error, context: RenderContext): void
-  protected setLoading(loading: boolean, context: RenderContext): void
+abstract class BaseBlockRenderer<TProps = unknown, TResult = unknown>
+  implements BlockRenderer<TProps, TResult>
+{
+  abstract readonly kind: string;
+  abstract readonly priority: number;
+
+  abstract render(
+    block: Block,
+    props: TProps,
+    context: RenderContext
+  ): Promise<RenderResult<TResult>>;
+
+  canRender(block: Block, context: RenderContext): boolean;
+  getDefaultProps(): Partial<TProps>;
+  validateProps(props: TProps): string[];
+
+  protected selectVariant(block: Block, context: RenderContext): Variant | null;
+  protected handleError(error: Error, context: RenderContext): void;
+  protected setLoading(loading: boolean, context: RenderContext): void;
 }
 ```
 
@@ -113,12 +130,16 @@ abstract class BaseBlockRenderer<TProps = unknown, TResult = unknown> implements
 Specialized base class for text content.
 
 ```typescript
-abstract class BaseTextRenderer<TProps = unknown, TResult = unknown> extends BaseBlockRenderer<TProps, TResult> {
-  protected async getTextContent(variant: Variant): Promise<string>
+abstract class BaseTextRenderer<TProps = unknown, TResult = unknown> extends BaseBlockRenderer<
+  TProps,
+  TResult
+> {
+  protected async getTextContent(variant: Variant): Promise<string>;
 }
 ```
 
 **Additional methods:**
+
 - `getTextContent(variant)` - Fetch text content from variant URI
 
 ### BaseImageRenderer
@@ -126,13 +147,17 @@ abstract class BaseTextRenderer<TProps = unknown, TResult = unknown> extends Bas
 Specialized base class for image content.
 
 ```typescript
-abstract class BaseImageRenderer<TProps = unknown, TResult = unknown> extends BaseBlockRenderer<TProps, TResult> {
-  protected isImageVariant(variant: Variant): boolean
-  protected getImageDimensions(variant: Variant): { width?: number; height?: number }
+abstract class BaseImageRenderer<TProps = unknown, TResult = unknown> extends BaseBlockRenderer<
+  TProps,
+  TResult
+> {
+  protected isImageVariant(variant: Variant): boolean;
+  protected getImageDimensions(variant: Variant): { width?: number; height?: number };
 }
 ```
 
 **Additional methods:**
+
 - `isImageVariant(variant)` - Check if variant is an image
 - `getImageDimensions(variant)` - Get image dimensions from variant
 
@@ -144,13 +169,13 @@ Interface that all renderers must implement.
 
 ```typescript
 interface BlockRenderer<TProps = unknown, TResult = unknown> {
-  readonly kind: string
-  readonly priority: number
-  
-  canRender(block: Block, context: RenderContext): boolean
-  render(block: Block, props: TProps, context: RenderContext): Promise<RenderResult<TResult>>
-  getDefaultProps?(): Partial<TProps>
-  validateProps?(props: TProps): string[]
+  readonly kind: string;
+  readonly priority: number;
+
+  canRender(block: Block, context: RenderContext): boolean;
+  render(block: Block, props: TProps, context: RenderContext): Promise<RenderResult<TResult>>;
+  getDefaultProps?(): Partial<TProps>;
+  validateProps?(props: TProps): string[];
 }
 ```
 
@@ -160,10 +185,10 @@ Context passed to renderers.
 
 ```typescript
 interface RenderContext {
-  capabilities: Capabilities
-  options?: Record<string, unknown>
-  onError?: (error: Error) => void
-  onLoading?: (loading: boolean) => void
+  capabilities: Capabilities;
+  options?: Record<string, unknown>;
+  onError?: (error: Error) => void;
+  onLoading?: (loading: boolean) => void;
 }
 ```
 
@@ -173,10 +198,10 @@ Result returned by renderers.
 
 ```typescript
 interface RenderResult<T = unknown> {
-  content: T
-  variant: Variant | null
-  metadata?: Record<string, unknown>
-  errors?: string[]
+  content: T;
+  variant: Variant | null;
+  metadata?: Record<string, unknown>;
+  errors?: string[];
 }
 ```
 
@@ -186,30 +211,30 @@ interface RenderResult<T = unknown> {
 
 ```typescript
 interface ContentItem {
-  id: string
-  type: string
-  title?: string
-  summary?: string
-  blocks: Block[]
-  representations?: Record<string, { blocks: string[] }>
-  createdAt?: string
-  updatedAt?: string
-  createdBy?: string
+  id: string;
+  type: string;
+  title?: string;
+  summary?: string;
+  blocks: Block[];
+  representations?: Record<string, { blocks: string[] }>;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
 }
 
 interface Block {
-  id: string
-  kind: string
-  payload: Record<string, unknown>
-  variants: Variant[]
+  id: string;
+  kind: string;
+  payload: Record<string, unknown>;
+  variants: Variant[];
 }
 
 interface Variant {
-  mediaType: string
-  uri?: string
-  bytes?: number
-  width?: number
-  height?: number
+  mediaType: string;
+  uri?: string;
+  bytes?: number;
+  width?: number;
+  height?: number;
 }
 ```
 
@@ -217,20 +242,20 @@ interface Variant {
 
 ```typescript
 interface Capabilities {
-  accept: string[]
-  hints?: CapabilityHints
+  accept: string[];
+  hints?: CapabilityHints;
 }
 
 interface CapabilityHints {
-  width?: number
-  height?: number
-  density?: number
-  network?: NetworkType
-  maxBytes?: number
-  interactive?: boolean
+  width?: number;
+  height?: number;
+  density?: number;
+  network?: NetworkType;
+  maxBytes?: number;
+  interactive?: boolean;
 }
 
-type NetworkType = 'FAST' | 'SLOW' | 'CELLULAR'
+type NetworkType = 'FAST' | 'SLOW' | 'CELLULAR';
 ```
 
 ## Utility Functions
@@ -241,18 +266,19 @@ Factory for creating test content.
 
 ```typescript
 class MockContentFactory {
-  static createImageBlock(variants?: Partial<Variant>[]): Block
-  static createMarkdownBlock(source?: string): Block
-  static createMermaidBlock(source?: string, theme?: string): Block
-  static createContentItem(options?: ContentOptions): ContentItem
-  static createCapabilities(scenario?: CapabilityScenario): Capabilities
-  static createOptimizedVariants(scenario: OptimizationScenario): Variant[]
-  static createUnrenderableBlock(): Block
-  static createEdgeCaseBlock(scenario: EdgeCaseScenario): Block
+  static createImageBlock(variants?: Partial<Variant>[]): Block;
+  static createMarkdownBlock(source?: string): Block;
+  static createMermaidBlock(source?: string, theme?: string): Block;
+  static createContentItem(options?: ContentOptions): ContentItem;
+  static createCapabilities(scenario?: CapabilityScenario): Capabilities;
+  static createOptimizedVariants(scenario: OptimizationScenario): Variant[];
+  static createUnrenderableBlock(): Block;
+  static createEdgeCaseBlock(scenario: EdgeCaseScenario): Block;
 }
 ```
 
 **Scenarios:**
+
 - Capability scenarios: `'desktop' | 'mobile' | 'slow-network' | 'high-density'`
 - Optimization scenarios: `'size-optimized' | 'quality-optimized' | 'format-variety'`
 - Edge case scenarios: `'empty-variants' | 'no-uri' | 'huge-file' | 'tiny-file'`
@@ -325,17 +351,17 @@ const processed = await processor.processContent(content, capabilities);
 ```typescript
 // 1. Define your block type
 interface CustomBlock extends Block {
-  kind: 'custom'
+  kind: 'custom';
   payload: {
-    customData: string
-  }
+    customData: string;
+  };
 }
 
 // 2. Create renderer
 class CustomRenderer extends BaseBlockRenderer<CustomProps, CustomResult> {
-  readonly kind = 'custom'
-  readonly priority = 1
-  
+  readonly kind = 'custom';
+  readonly priority = 1;
+
   async render(block: CustomBlock, props, context) {
     // Implementation
   }

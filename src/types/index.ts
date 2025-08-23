@@ -31,6 +31,18 @@ export type { Capabilities, CapabilityHints, NetworkType } from './capabilities'
 
 export { DEFAULT_CAPABILITIES } from './capabilities';
 
+// Styling types
+export type {
+  Theme,
+  ShadowStyle,
+  StyleCapabilities,
+  StyleAdapter,
+  StyleFromAdapter,
+  ThemeFromAdapter,
+} from './styling';
+
+export { defaultTheme, darkTheme } from './styling';
+
 // Utility types and builders
 export type { PayloadForKind, PayloadForUnknownKind, PartialContentItem } from './utils';
 

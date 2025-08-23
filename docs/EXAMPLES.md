@@ -23,7 +23,7 @@ const selector = new VariantSelector();
 const variants = [
   { mediaType: 'image/avif', bytes: 40000, uri: 'image.avif' },
   { mediaType: 'image/webp', bytes: 50000, uri: 'image.webp' },
-  { mediaType: 'image/jpeg', bytes: 80000, uri: 'image.jpg' }
+  { mediaType: 'image/jpeg', bytes: 80000, uri: 'image.jpg' },
 ];
 
 const bestVariant = selector.selectBestVariant(variants, capabilities);
@@ -44,16 +44,14 @@ const processor = new DefaultContentProcessor();
 const optimized = await processor.processContent(content, capabilities);
 
 // Each block now has optimal variants selected
-optimized.blocks.forEach(block => {
+optimized.blocks.forEach((block) => {
   console.log(`Block ${block.id}: ${block.variants[0].mediaType}`);
 });
 
 // Apply representation filtering
-const summary = await processor.processContent(
-  content, 
-  capabilities, 
-  { representation: 'summary' }
-);
+const summary = await processor.processContent(content, capabilities, {
+  representation: 'summary',
+});
 console.log(`Summary has ${summary.blocks.length} blocks`);
 ```
 
@@ -65,11 +63,11 @@ console.log(`Summary has ${summary.blocks.length} blocks`);
 // components/ContentRenderer.tsx
 import React from 'react';
 import { View, Text, Image, ScrollView } from 'react-native';
-import { 
-  DefaultRendererRegistry, 
-  BaseImageRenderer, 
+import {
+  DefaultRendererRegistry,
+  BaseImageRenderer,
   BaseTextRenderer,
-  CapabilityDetector 
+  CapabilityDetector
 } from '@portable-content/typescript-sdk';
 
 // Image renderer for React Native
@@ -79,7 +77,7 @@ class RNImageRenderer extends BaseImageRenderer {
 
   async render(block, props, context) {
     const variant = this.selectVariant(block, context);
-    
+
     if (!variant || !this.isImageVariant(variant)) {
       return { content: <Text>Image unavailable</Text>, variant: null };
     }
@@ -116,7 +114,7 @@ class RNMarkdownRenderer extends BaseTextRenderer {
   async render(block, props, context) {
     const variant = this.selectVariant(block, context);
     const text = await this.getTextContent(variant);
-    
+
     // Simple markdown to React Native (you'd use a real markdown library)
     const lines = text.split('\n').map((line, index) => {
       if (line.startsWith('# ')) {
@@ -141,13 +139,13 @@ export const ContentRenderer: React.FC<{ content: ContentItem }> = ({ content })
       // Set up rendering system
       const detector = new CapabilityDetector();
       const capabilities = detector.detectCapabilities();
-      
+
       const registry = new DefaultRendererRegistry();
       registry.register(new RNImageRenderer());
       registry.register(new RNMarkdownRenderer());
 
       const context = { capabilities };
-      
+
       // Render each block
       const rendered = await Promise.all(
         content.blocks.map(async (block) => {
@@ -159,7 +157,7 @@ export const ContentRenderer: React.FC<{ content: ContentItem }> = ({ content })
           return <Text key={block.id}>Unsupported block type: {block.kind}</Text>;
         })
       );
-      
+
       setRenderedBlocks(rendered);
     };
 
@@ -181,10 +179,10 @@ export const ContentRenderer: React.FC<{ content: ContentItem }> = ({ content })
 ```typescript
 // composables/useContentRenderer.ts
 import { ref, computed } from 'vue';
-import { 
-  DefaultRendererRegistry, 
+import {
+  DefaultRendererRegistry,
   DefaultContentProcessor,
-  CapabilityDetector 
+  CapabilityDetector,
 } from '@portable-content/typescript-sdk';
 import { createImageRenderer, createMarkdownRenderer } from './renderers';
 
@@ -192,17 +190,17 @@ export function useContentRenderer() {
   const registry = new DefaultRendererRegistry();
   const processor = new DefaultContentProcessor();
   const detector = new CapabilityDetector();
-  
+
   // Register Vue-specific renderers
   registry.register(createImageRenderer());
   registry.register(createMarkdownRenderer());
-  
+
   const capabilities = detector.detectCapabilities();
-  
+
   const renderContent = async (content: ContentItem) => {
     // Process content for optimal delivery
     const optimized = await processor.processContent(content, capabilities);
-    
+
     // Render each block
     const context = { capabilities };
     const rendered = await Promise.all(
@@ -213,19 +211,19 @@ export function useContentRenderer() {
           return {
             id: block.id,
             content: result.content,
-            variant: result.variant
+            variant: result.variant,
           };
         }
         return null;
       })
     );
-    
+
     return rendered.filter(Boolean);
   };
-  
+
   return {
     renderContent,
-    capabilities: computed(() => capabilities)
+    capabilities: computed(() => capabilities),
   };
 }
 
@@ -234,22 +232,22 @@ import { h } from 'vue';
 import { BaseImageRenderer, BaseTextRenderer } from '@portable-content/typescript-sdk';
 
 export function createImageRenderer() {
-  return new class extends BaseImageRenderer {
+  return new (class extends BaseImageRenderer {
     readonly kind = 'image';
     readonly priority = 1;
 
     async render(block, props, context) {
       const variant = this.selectVariant(block, context);
-      
+
       if (!variant || !this.isImageVariant(variant)) {
         return {
           content: h('div', { class: 'error' }, 'Image not available'),
-          variant: null
+          variant: null,
         };
       }
 
       const { width, height } = this.getImageDimensions(variant);
-      
+
       return {
         content: h('figure', { class: 'image-block' }, [
           h('img', {
@@ -258,40 +256,40 @@ export function createImageRenderer() {
             style: {
               maxWidth: '100%',
               height: 'auto',
-              borderRadius: '8px'
-            }
+              borderRadius: '8px',
+            },
           }),
-          props.caption && h('figcaption', props.caption)
+          props.caption && h('figcaption', props.caption),
         ]),
         variant,
-        metadata: { originalWidth: width, originalHeight: height }
+        metadata: { originalWidth: width, originalHeight: height },
       };
     }
-  };
+  })();
 }
 
 export function createMarkdownRenderer() {
-  return new class extends BaseTextRenderer {
+  return new (class extends BaseTextRenderer {
     readonly kind = 'markdown';
     readonly priority = 1;
 
     async render(block, props, context) {
       const variant = this.selectVariant(block, context);
       const markdown = await this.getTextContent(variant);
-      
+
       // Convert markdown to HTML (use your preferred markdown library)
       const html = await convertMarkdownToHTML(markdown);
-      
+
       return {
         content: h('div', {
           class: ['markdown-content', props.theme],
-          innerHTML: html
+          innerHTML: html,
         }),
         variant,
-        metadata: { wordCount: markdown.split(' ').length }
+        metadata: { wordCount: markdown.split(' ').length },
       };
     }
-  };
+  })();
 }
 ```
 
@@ -300,20 +298,20 @@ export function createMarkdownRenderer() {
 ```typescript
 // components/ContentRenderer.tsx
 import React from 'react';
-import { 
-  DefaultRendererRegistry, 
+import {
+  DefaultRendererRegistry,
   DefaultContentProcessor,
-  CapabilityDetector 
+  CapabilityDetector
 } from '@portable-content/typescript-sdk';
 
 // Server-side content processing
 export async function getServerSideProps(context) {
   const detector = new CapabilityDetector();
   const processor = new DefaultContentProcessor();
-  
+
   // Get content from your API
   const content = await fetchContent(context.params.id);
-  
+
   // Detect capabilities from request headers
   const capabilities = {
     accept: context.req.headers.accept?.split(',') || ['text/html'],
@@ -322,10 +320,10 @@ export async function getServerSideProps(context) {
       network: 'FAST' // Assume fast for SSR
     }
   };
-  
+
   // Process content server-side
   const optimized = await processor.processContent(content, capabilities);
-  
+
   return {
     props: {
       content: optimized,
@@ -335,22 +333,22 @@ export async function getServerSideProps(context) {
 }
 
 // Client-side renderer component
-const ContentRenderer: React.FC<{ content: ContentItem, capabilities: Capabilities }> = ({ 
-  content, 
-  capabilities 
+const ContentRenderer: React.FC<{ content: ContentItem, capabilities: Capabilities }> = ({
+  content,
+  capabilities
 }) => {
   const [renderedContent, setRenderedContent] = React.useState(null);
 
   React.useEffect(() => {
     const renderContent = async () => {
       const registry = new DefaultRendererRegistry();
-      
+
       // Register React renderers
       registry.register(new ReactImageRenderer());
       registry.register(new ReactMarkdownRenderer());
-      
+
       const context = { capabilities };
-      
+
       const rendered = await Promise.all(
         content.blocks.map(async (block) => {
           const renderer = registry.getRenderer(block, context);
@@ -365,7 +363,7 @@ const ContentRenderer: React.FC<{ content: ContentItem, capabilities: Capabiliti
           return null;
         })
       );
-      
+
       setRenderedContent(rendered.filter(Boolean));
     };
 
@@ -404,10 +402,10 @@ class CodeRenderer extends BaseBlockRenderer<CodeProps, HTMLElement> {
 
   async render(block: CodeBlock, props, context) {
     const { language, code, theme } = block.payload;
-    
+
     // Use syntax highlighting library
     const highlighted = await highlightCode(code, language);
-    
+
     const element = document.createElement('div');
     element.className = `code-block theme-${theme || 'default'}`;
     element.innerHTML = `
@@ -417,11 +415,11 @@ class CodeRenderer extends BaseBlockRenderer<CodeProps, HTMLElement> {
       </div>
       <pre><code>${highlighted}</code></pre>
     `;
-    
+
     return {
       content: element,
       variant: null, // No variants for code blocks
-      metadata: { language, lines: code.split('\n').length }
+      metadata: { language, lines: code.split('\n').length },
     };
   }
 }
@@ -434,28 +432,28 @@ class NetworkAwareImageRenderer extends BaseImageRenderer {
   async render(block, props, context) {
     const variant = this.selectVariant(block, context);
     const network = context.capabilities.hints?.network;
-    
+
     // Adjust quality based on network
     let quality = 'high';
     if (network === 'SLOW') quality = 'medium';
     if (network === 'CELLULAR') quality = 'low';
-    
+
     // Progressive loading for slow networks
     if (network !== 'FAST') {
       return this.renderProgressiveImage(variant, quality);
     }
-    
+
     return this.renderStandardImage(variant);
   }
-  
+
   private async renderProgressiveImage(variant, quality) {
     // Load low-quality placeholder first
     const placeholder = await this.generatePlaceholder(variant);
-    
+
     return {
       content: createProgressiveImage(placeholder, variant.uri),
       variant,
-      metadata: { loadingStrategy: 'progressive', quality }
+      metadata: { loadingStrategy: 'progressive', quality },
     };
   }
 }
@@ -471,23 +469,23 @@ class RobustRenderer extends BaseBlockRenderer {
       return await this.renderPrimary(block, props, context);
     } catch (primaryError) {
       console.warn('Primary rendering failed:', primaryError);
-      
+
       try {
         // Attempt fallback rendering
         return await this.renderFallback(block, props, context);
       } catch (fallbackError) {
         console.error('Fallback rendering failed:', fallbackError);
-        
+
         // Return error state
         return {
           content: this.createErrorContent(primaryError.message),
           variant: null,
-          errors: [primaryError.message, fallbackError.message]
+          errors: [primaryError.message, fallbackError.message],
         };
       }
     }
   }
-  
+
   private createErrorContent(message: string) {
     return `<div class="error-block">Failed to render content: ${message}</div>`;
   }
@@ -505,37 +503,37 @@ describe('Content Rendering', () => {
     const content = MockContentFactory.createContentItem({
       includeMarkdown: true,
       includeImage: true,
-      includeMermaid: true
+      includeMermaid: true,
     });
-    
+
     // Test with different capability scenarios
     const scenarios = ['desktop', 'mobile', 'slow-network', 'high-density'];
-    
+
     for (const scenario of scenarios) {
       const capabilities = MockContentFactory.createCapabilities(scenario);
       const processor = new DefaultContentProcessor();
-      
+
       const processed = await processor.processContent(content, capabilities);
-      
+
       // Verify optimization worked
       expect(processed.blocks).toHaveLength(3);
-      processed.blocks.forEach(block => {
+      processed.blocks.forEach((block) => {
         expect(block.variants.length).toBeGreaterThan(0);
         expect(block.variants[0]).toBeDefined(); // Best variant selected
       });
     }
   });
-  
+
   it('should handle edge cases gracefully', async () => {
     const edgeCases = ['empty-variants', 'no-uri', 'huge-file', 'tiny-file'];
-    
+
     for (const edgeCase of edgeCases) {
       const block = MockContentFactory.createEdgeCaseBlock(edgeCase);
       const capabilities = MockContentFactory.createCapabilities('desktop');
-      
+
       const renderer = new MyRenderer();
       const context = { capabilities };
-      
+
       // Should not throw
       const result = await renderer.render(block, {}, context);
       expect(result).toBeDefined();

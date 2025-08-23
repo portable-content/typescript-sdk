@@ -1,6 +1,6 @@
 {
   "name": "@portable-content/typescript-sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Core TypeScript SDK for Portable Content System",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
