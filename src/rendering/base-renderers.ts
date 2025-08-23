@@ -13,8 +13,8 @@ import { VariantSelector } from './variant-selector';
  * Abstract base class for block renderers
  */
 export abstract class BaseBlockRenderer<TProps = unknown, TResult = unknown>
-  implements BlockRenderer<TProps, TResult> {
-
+  implements BlockRenderer<TProps, TResult>
+{
   protected variantSelector = new VariantSelector();
 
   abstract readonly kind: string;
@@ -88,9 +88,10 @@ export abstract class BaseBlockRenderer<TProps = unknown, TResult = unknown>
 /**
  * Base renderer for text-based content
  */
-export abstract class BaseTextRenderer<TProps = unknown, TResult = unknown>
-  extends BaseBlockRenderer<TProps, TResult> {
-
+export abstract class BaseTextRenderer<
+  TProps = unknown,
+  TResult = unknown,
+> extends BaseBlockRenderer<TProps, TResult> {
   /**
    * Extract text content from variant
    */
@@ -114,9 +115,10 @@ export abstract class BaseTextRenderer<TProps = unknown, TResult = unknown>
 /**
  * Base renderer for image-based content
  */
-export abstract class BaseImageRenderer<TProps = unknown, TResult = unknown>
-  extends BaseBlockRenderer<TProps, TResult> {
-
+export abstract class BaseImageRenderer<
+  TProps = unknown,
+  TResult = unknown,
+> extends BaseBlockRenderer<TProps, TResult> {
   /**
    * Check if variant is an image
    */
@@ -130,7 +132,7 @@ export abstract class BaseImageRenderer<TProps = unknown, TResult = unknown>
   protected getImageDimensions(variant: Variant): { width?: number; height?: number } {
     return {
       width: variant.width,
-      height: variant.height
+      height: variant.height,
     };
   }
 }

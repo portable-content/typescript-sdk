@@ -21,7 +21,7 @@ export class DefaultRendererRegistry implements RendererRegistry {
     const existing = this.renderers.get(renderer.kind) || [];
 
     // Insert in priority order (highest first)
-    const insertIndex = existing.findIndex(r => r.priority < renderer.priority);
+    const insertIndex = existing.findIndex((r) => r.priority < renderer.priority);
     if (insertIndex === -1) {
       existing.push(renderer);
     } else {
@@ -40,7 +40,7 @@ export class DefaultRendererRegistry implements RendererRegistry {
 
     if (priority !== undefined) {
       // Remove specific renderer by priority
-      const filtered = existing.filter(r => r.priority !== priority);
+      const filtered = existing.filter((r) => r.priority !== priority);
       if (filtered.length === 0) {
         this.renderers.delete(kind);
       } else {

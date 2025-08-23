@@ -17,7 +17,7 @@ export class CapabilityDetector {
   detectCapabilities(): Capabilities {
     return {
       accept: this.detectSupportedMediaTypes(),
-      hints: this.detectCapabilityHints()
+      hints: this.detectCapabilityHints(),
     };
   }
 
@@ -25,11 +25,7 @@ export class CapabilityDetector {
    * Detect supported media types
    */
   private detectSupportedMediaTypes(): string[] {
-    const supported = [
-      'text/markdown',
-      'text/html',
-      'text/plain'
-    ];
+    const supported = ['text/markdown', 'text/html', 'text/plain'];
 
     // Check image format support
     if (this.supportsImageFormat('avif')) {
@@ -57,7 +53,7 @@ export class CapabilityDetector {
       height: this.detectScreenHeight(),
       density: this.detectPixelDensity(),
       network: this.detectNetworkType(),
-      interactive: this.detectInteractiveCapability()
+      interactive: this.detectInteractiveCapability(),
     };
   }
 

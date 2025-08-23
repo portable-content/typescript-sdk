@@ -31,12 +31,12 @@ export class DefaultContentProcessor implements ContentProcessor {
 
     // Process each block
     const processedBlocks = await Promise.all(
-      processedContent.blocks.map(block => this.processBlock(block, capabilities, options))
+      processedContent.blocks.map((block) => this.processBlock(block, capabilities, options))
     );
 
     return {
       ...processedContent,
-      blocks: processedBlocks
+      blocks: processedBlocks,
     };
   }
 
@@ -58,7 +58,7 @@ export class DefaultContentProcessor implements ContentProcessor {
 
     return {
       ...block,
-      variants: filteredVariants
+      variants: filteredVariants,
     };
   }
 
@@ -72,11 +72,11 @@ export class DefaultContentProcessor implements ContentProcessor {
     }
 
     const allowedBlockIds = new Set(repr.blocks);
-    const filteredBlocks = content.blocks.filter(block => allowedBlockIds.has(block.id));
+    const filteredBlocks = content.blocks.filter((block) => allowedBlockIds.has(block.id));
 
     return {
       ...content,
-      blocks: filteredBlocks
+      blocks: filteredBlocks,
     };
   }
 
@@ -85,8 +85,6 @@ export class DefaultContentProcessor implements ContentProcessor {
    */
   private getFallbackVariants(allVariants: Variant[], selectedVariant: Variant): Variant[] {
     // Return a few fallback variants in case the selected one fails
-    return allVariants
-      .filter(v => v !== selectedVariant)
-      .slice(0, 2); // Keep 2 fallbacks
+    return allVariants.filter((v) => v !== selectedVariant).slice(0, 2); // Keep 2 fallbacks
   }
 }

@@ -20,10 +20,7 @@ export class VariantSelector {
   /**
    * Select the best variant from available options
    */
-  selectBestVariant(
-    variants: Variant[],
-    capabilities: Capabilities
-  ): Variant | null {
+  selectBestVariant(variants: Variant[], capabilities: Capabilities): Variant | null {
     if (variants.length === 0) {
       return null;
     }
@@ -44,10 +41,7 @@ export class VariantSelector {
   /**
    * Score all variants based on capabilities
    */
-  private scoreVariants(
-    variants: Variant[],
-    capabilities: Capabilities
-  ): VariantScore[] {
+  private scoreVariants(variants: Variant[], capabilities: Capabilities): VariantScore[] {
     const scored: VariantScore[] = [];
 
     for (const variant of variants) {
@@ -63,10 +57,7 @@ export class VariantSelector {
   /**
    * Score a single variant against capabilities
    */
-  private scoreVariant(
-    variant: Variant,
-    capabilities: Capabilities
-  ): VariantScore {
+  private scoreVariant(variant: Variant, capabilities: Capabilities): VariantScore {
     const reasons: string[] = [];
     let score = 0;
 
@@ -247,7 +238,7 @@ export class VariantSelector {
     }
 
     // Prefer variants with URIs (accessible content)
-    const accessibleVariants = variants.filter(v => v.uri);
+    const accessibleVariants = variants.filter((v) => v.uri);
     if (accessibleVariants.length > 0) {
       // Return smallest accessible variant as fallback
       return accessibleVariants.reduce((smallest, current) => {
