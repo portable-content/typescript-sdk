@@ -2,59 +2,116 @@
  * @fileoverview Framework-agnostic rendering interfaces
  */
 
-import { Block, Capabilities } from '../types';
+import type { Block, Variant, Capabilities } from '../types';
 
 /**
- * Interface for block renderers
+ * Result of rendering a block
  */
-export interface BlockRenderer<TProps = Record<string, unknown>> {
-  /** Block kind this renderer handles */
-  kind: string;
-
-  /** Check if this renderer can handle the given block */
-  canRender(block: Block, capabilities: Capabilities): boolean;
-
-  /** Render the block with given props */
-  render(block: Block, props: TProps): unknown;
+export interface RenderResult<T = unknown> {
+  /** Rendered content (framework-specific) */
+  content: T;
+  /** Selected variant used for rendering */
+  variant: Variant | null;
+  /** Any metadata about the rendering */
+  metadata?: Record<string, unknown>;
+  /** Errors that occurred during rendering */
+  errors?: string[];
 }
 
 /**
- * Interface for renderer registry
+ * Context passed to renderers
+ */
+export interface RenderContext {
+  /** Client capabilities */
+  capabilities: Capabilities;
+  /** Additional rendering options */
+  options?: Record<string, unknown>;
+  /** Callback for handling errors */
+  onError?: (error: Error) => void;
+  /** Callback for loading states */
+  onLoading?: (loading: boolean) => void;
+}
+
+/**
+ * Base interface for block renderers
+ */
+export interface BlockRenderer<TProps = unknown, TResult = unknown> {
+  /** Block kind this renderer handles */
+  readonly kind: string;
+
+  /** Priority for renderer selection (higher = preferred) */
+  readonly priority: number;
+
+  /**
+   * Check if this renderer can handle the given block
+   */
+  canRender(block: Block, context: RenderContext): boolean;
+
+  /**
+   * Render the block with given props
+   */
+  render(block: Block, props: TProps, context: RenderContext): Promise<RenderResult<TResult>>;
+
+  /**
+   * Get default props for this renderer
+   */
+  getDefaultProps?(): Partial<TProps>;
+
+  /**
+   * Validate props before rendering
+   */
+  validateProps?(props: TProps): string[];
+}
+
+/**
+ * Registry for managing block renderers
  */
 export interface RendererRegistry {
-  /** Register a block renderer */
-  register<T>(renderer: BlockRenderer<T>): void;
+  /**
+   * Register a renderer for a block kind
+   */
+  register<TProps, TResult>(renderer: BlockRenderer<TProps, TResult>): void;
 
-  /** Get renderer for a specific block kind */
-  getRenderer(kind: string): BlockRenderer | null;
+  /**
+   * Unregister a renderer
+   */
+  unregister(kind: string, priority?: number): void;
 
-  /** Render a block using the appropriate renderer */
-  renderBlock(block: Block, capabilities: Capabilities): unknown;
+  /**
+   * Get the best renderer for a block
+   */
+  getRenderer(block: Block, context: RenderContext): BlockRenderer | null;
+
+  /**
+   * Get all renderers for a kind
+   */
+  getRenderers(kind: string): BlockRenderer[];
+
+  /**
+   * Check if a kind can be rendered
+   */
+  canRender(kind: string): boolean;
 }
 
 /**
- * Processed content ready for rendering
+ * Content processor interface
  */
-export interface ProcessedContent {
-  /** Original content item */
-  original: Block;
-  /** Processed blocks with selected variants */
-  blocks: ProcessedBlock[];
-  /** Applied capabilities */
-  capabilities: Capabilities;
-}
+export interface ContentProcessor {
+  /**
+   * Process content before rendering
+   */
+  processContent(
+    content: unknown,
+    capabilities: Capabilities,
+    options?: Record<string, unknown>
+  ): Promise<unknown>;
 
-/**
- * Processed block with selected variant
- */
-export interface ProcessedBlock {
-  /** Original block */
-  original: Block;
-  /** Selected variant for rendering */
-  selectedVariant: import('../types').Variant;
-  /** Processing metadata */
-  metadata: {
-    processingTime: number;
-    selectionReason: string;
-  };
+  /**
+   * Process individual block
+   */
+  processBlock(
+    block: Block,
+    capabilities: Capabilities,
+    options?: Record<string, unknown>
+  ): Promise<Block>;
 }

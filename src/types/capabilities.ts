@@ -24,6 +24,10 @@ export interface CapabilityHints {
   density?: number;
   /** Network connection type hint */
   network?: NetworkType;
+  /** Maximum acceptable file size in bytes */
+  maxBytes?: number;
+  /** Whether the client supports interactive features */
+  interactive?: boolean;
 }
 
 /**
