@@ -10,10 +10,10 @@ import { Block, Capabilities } from '../types';
 export interface BlockRenderer<TProps = any> {
   /** Block kind this renderer handles */
   kind: string;
-  
+
   /** Check if this renderer can handle the given block */
   canRender(block: Block, capabilities: Capabilities): boolean;
-  
+
   /** Render the block with given props */
   render(block: Block, props: TProps): any;
 }
@@ -24,10 +24,10 @@ export interface BlockRenderer<TProps = any> {
 export interface RendererRegistry {
   /** Register a block renderer */
   register<T>(renderer: BlockRenderer<T>): void;
-  
+
   /** Get renderer for a specific block kind */
   getRenderer(kind: string): BlockRenderer | null;
-  
+
   /** Render a block using the appropriate renderer */
   renderBlock(block: Block, capabilities: Capabilities): any;
 }

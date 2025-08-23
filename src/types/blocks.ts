@@ -51,4 +51,4 @@ export const BLOCK_KINDS = {
 /**
  * Type for block kind values
  */
-export type BlockKind = typeof BLOCK_KINDS[keyof typeof BLOCK_KINDS];
+export type BlockKind = (typeof BLOCK_KINDS)[keyof typeof BLOCK_KINDS];

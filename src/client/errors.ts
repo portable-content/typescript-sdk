@@ -6,7 +6,10 @@
  * Base error class for Portable Content SDK
  */
 export class PortableContentError extends Error {
-  constructor(message: string, public readonly code?: string) {
+  constructor(
+    message: string,
+    public readonly code?: string
+  ) {
     super(message);
     this.name = 'PortableContentError';
   }
@@ -16,7 +19,10 @@ export class PortableContentError extends Error {
  * Network-related errors
  */
 export class NetworkError extends PortableContentError {
-  constructor(message: string, public readonly statusCode?: number) {
+  constructor(
+    message: string,
+    public readonly statusCode?: number
+  ) {
     super(message, 'NETWORK_ERROR');
     this.name = 'NetworkError';
   }
@@ -49,7 +55,10 @@ export class ContentNotFoundError extends PortableContentError {
  * Validation error
  */
 export class ValidationError extends PortableContentError {
-  constructor(message: string, public readonly details?: any) {
+  constructor(
+    message: string,
+    public readonly details?: any
+  ) {
     super(message, 'VALIDATION_ERROR');
     this.name = 'ValidationError';
   }
