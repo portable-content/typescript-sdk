@@ -2,7 +2,17 @@
  * @fileoverview Tests for adapter registry
  */
 
-import { AdapterRegistry, adapterRegistry, registerAdapter, getAdapter } from '../../../src/styling/adapter-registry';
+import {
+  AdapterRegistry,
+  adapterRegistry,
+  registerAdapter,
+  getAdapter,
+  hasAdapter,
+  unregisterAdapter,
+  getAdapterNames,
+  getAllAdapters,
+
+} from '../../../src/styling/adapter-registry';
 import { createMockAdapter } from '../../__mocks__/mock-style-adapter';
 
 describe('AdapterRegistry', () => {
@@ -112,8 +122,64 @@ describe('Global registry functions', () => {
 
   it('should work with global registry', () => {
     const adapter = createMockAdapter('global-test');
-    
+
     registerAdapter(adapter);
     expect(getAdapter('global-test')).toBe(adapter);
+  });
+
+  it('should check if adapter exists', () => {
+    const adapter = createMockAdapter('exists-test');
+
+    expect(hasAdapter('exists-test')).toBe(false);
+    registerAdapter(adapter);
+    expect(hasAdapter('exists-test')).toBe(true);
+  });
+
+  it('should unregister adapters', () => {
+    const adapter = createMockAdapter('unregister-test');
+
+    registerAdapter(adapter);
+    expect(hasAdapter('unregister-test')).toBe(true);
+
+    unregisterAdapter('unregister-test');
+    expect(hasAdapter('unregister-test')).toBe(false);
+  });
+
+  it('should get all adapter names', () => {
+    const adapter1 = createMockAdapter('adapter-1');
+    const adapter2 = createMockAdapter('adapter-2');
+
+    registerAdapter(adapter1);
+    registerAdapter(adapter2);
+
+    const names = getAdapterNames();
+    expect(names).toContain('adapter-1');
+    expect(names).toContain('adapter-2');
+    expect(names).toHaveLength(2);
+  });
+
+  it('should get all adapters', () => {
+    const adapter1 = createMockAdapter('adapter-1');
+    const adapter2 = createMockAdapter('adapter-2');
+
+    registerAdapter(adapter1);
+    registerAdapter(adapter2);
+
+    const adapters = getAllAdapters();
+    expect(adapters).toContain(adapter1);
+    expect(adapters).toContain(adapter2);
+    expect(adapters).toHaveLength(2);
+  });
+
+  it('should clear all adapters', () => {
+    const adapter1 = createMockAdapter('adapter-1');
+    const adapter2 = createMockAdapter('adapter-2');
+
+    registerAdapter(adapter1);
+    registerAdapter(adapter2);
+    expect(getAdapterNames()).toHaveLength(2);
+
+    adapterRegistry.clear();
+    expect(getAdapterNames()).toHaveLength(0);
   });
 });

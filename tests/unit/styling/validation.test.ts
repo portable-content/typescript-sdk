@@ -7,7 +7,8 @@ import {
   validateCapabilities,
   testAdapter,
   validateAdapterName,
-  hasCapability
+  hasCapability,
+  getSupportedCapabilities
 } from '../../../src/styling/validation';
 import { createMockAdapter } from '../../__mocks__/mock-style-adapter';
 import { baseAdapter } from '../../../src/styling/adapters/base-adapter';
@@ -204,5 +205,48 @@ describe('hasCapability', () => {
     delete (adapter as any).capabilities;
 
     expect(hasCapability(adapter, 'responsive')).toBe(false);
+  });
+});
+
+describe('getSupportedCapabilities', () => {
+  it('should return supported capabilities', () => {
+    const adapter = createMockAdapter('test');
+    (adapter as any).capabilities = {
+      responsive: true,
+      animations: false,
+      variants: true,
+      darkMode: false,
+      customProperties: true,
+    };
+
+    const supported = getSupportedCapabilities(adapter);
+    expect(supported).toContain('responsive');
+    expect(supported).toContain('variants');
+    expect(supported).toContain('customProperties');
+    expect(supported).not.toContain('animations');
+    expect(supported).not.toContain('darkMode');
+    expect(supported).toHaveLength(3);
+  });
+
+  it('should return empty array when no capabilities defined', () => {
+    const adapter = createMockAdapter('no-caps');
+    delete (adapter as any).capabilities;
+
+    const supported = getSupportedCapabilities(adapter);
+    expect(supported).toEqual([]);
+  });
+
+  it('should return empty array when all capabilities are false', () => {
+    const adapter = createMockAdapter('test');
+    (adapter as any).capabilities = {
+      responsive: false,
+      animations: false,
+      variants: false,
+      darkMode: false,
+      customProperties: false,
+    };
+
+    const supported = getSupportedCapabilities(adapter);
+    expect(supported).toEqual([]);
   });
 });
