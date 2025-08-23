@@ -2,6 +2,8 @@
 
 A framework-agnostic TypeScript SDK for the Portable Content System, providing type-safe data models, API clients, and rendering utilities.
 
+[![codecov](https://codecov.io/gh/portable-content/typescript-sdk/graph/badge.svg?token=kny2WCQvHx)](https://codecov.io/gh/portable-content/typescript-sdk)
+
 ## Features
 
 - 🔒 **Type-Safe**: Full TypeScript support with strict type checking
