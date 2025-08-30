@@ -20,7 +20,7 @@ class MockRenderer implements BlockRenderer {
   async render(block: Block, props: any, context: RenderContext): Promise<RenderResult> {
     return {
       content: `Rendered ${block.kind}`,
-      variant: block.variants[0] || null
+      payloadSource: block.content.primary || null
     };
   }
 }
@@ -145,8 +145,9 @@ describe('DefaultRendererRegistry', () => {
       const block: Block = {
         id: 'test',
         kind: 'markdown',
-        payload: {},
-        variants: []
+        content: {
+          primary: { type: 'inline', mediaType: 'text/markdown', source: '# Test' }
+        }
       };
 
       const result = registry.getRenderer(block, mockContext);
@@ -157,8 +158,9 @@ describe('DefaultRendererRegistry', () => {
       const block: Block = {
         id: 'test',
         kind: 'unknown',
-        payload: {},
-        variants: []
+        content: {
+          primary: { type: 'inline', mediaType: 'text/plain', source: 'test' }
+        }
       };
 
       const result = registry.getRenderer(block, mockContext);
@@ -175,8 +177,9 @@ describe('DefaultRendererRegistry', () => {
       const block: Block = {
         id: 'test',
         kind: 'markdown',
-        payload: {},
-        variants: []
+        content: {
+          primary: { type: 'inline', mediaType: 'text/markdown', source: '# Test' }
+        }
       };
 
       const result = registry.getRenderer(block, mockContext);
@@ -190,8 +193,9 @@ describe('DefaultRendererRegistry', () => {
       const block: Block = {
         id: 'test',
         kind: 'markdown',
-        payload: {},
-        variants: []
+        content: {
+          primary: { type: 'inline', mediaType: 'text/markdown', source: '# Test' }
+        }
       };
 
       const result = registry.getRenderer(block, mockContext);

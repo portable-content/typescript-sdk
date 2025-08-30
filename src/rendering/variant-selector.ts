@@ -36,8 +36,18 @@ export class PayloadSourceSelector {
     const scoredSources = this.scorePayloadSources(allSources, capabilities);
 
     if (scoredSources.length === 0) {
-      // No acceptable sources, return primary as fallback
-      return primary;
+      // Check if any accept type is a catch-all
+      const hasCatchAll = capabilities.accept.some(accept =>
+        accept.split(';')[0].trim() === '*/*'
+      );
+
+      if (hasCatchAll) {
+        // Return primary as fallback for catch-all
+        return primary;
+      }
+
+      // No acceptable sources and no catch-all, return null
+      return null;
     }
 
     // Sort by score (highest first) and return best
@@ -86,8 +96,17 @@ export class PayloadSourceSelector {
 
     // Prefer inline content for small data (reduces HTTP requests)
     if (source.type === 'inline') {
-      score += 0.1;
-      reasons.push('Inline content bonus');
+      let inlineBonus = 0.1;
+
+      // Give higher bonus for inline content on slow networks
+      if (capabilities.hints?.network === 'SLOW' || capabilities.hints?.network === 'CELLULAR') {
+        inlineBonus = 0.5;
+        reasons.push('Inline content bonus (slow network)');
+      } else {
+        reasons.push('Inline content bonus');
+      }
+
+      score += inlineBonus;
     }
 
     // Apply capability hints

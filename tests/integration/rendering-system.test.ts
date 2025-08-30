@@ -315,7 +315,7 @@ describe('Rendering System Integration', () => {
       const blockWithManyAlternatives = {
         ...MockContentFactory.createImageBlock(),
         content: {
-          primary: { type: 'external', mediaType: 'image/png', uri: 'test.png' },
+          primary: { type: 'external' as const, mediaType: 'image/png', uri: 'test.png' },
           alternatives: MockContentFactory.createOptimizedPayloadSources('format-variety')
         }
       };
