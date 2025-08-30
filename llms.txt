@@ -1,20 +1,21 @@
 # Portable Content TypeScript SDK
 
-> Framework-agnostic TypeScript SDK for intelligent content rendering and variant selection
+> Framework-agnostic TypeScript SDK for intelligent content rendering and payload source selection
 
 ## Overview
 
-The Portable Content TypeScript SDK provides a complete framework-agnostic foundation for rendering content across different platforms (React Native, Vue, React Web, etc.). The core innovation is intelligent variant selection that automatically chooses optimal content variants based on client capabilities, network conditions, and device characteristics.
+The Portable Content TypeScript SDK provides a complete framework-agnostic foundation for rendering content across different platforms (React Native, Vue, React Web, etc.). The core innovation is intelligent payload source selection that automatically chooses optimal content sources based on client capabilities, network conditions, and device characteristics.
 
 ## Key Components
 
-### 1. Variant Selection Engine (`VariantSelector`)
-Intelligently selects the best content variant from available options:
+### 1. Payload Source Selection Engine (`PayloadSourceSelector`)
+Intelligently selects the best payload source from available options:
 - **Media type matching** with wildcard support (`image/*`, `*/*`)
 - **Quality scoring** based on Accept headers with q-values
 - **Format preferences** for modern formats (AVIF > WebP > JPEG)
 - **Network optimization** (smaller files on slow/cellular networks)
-- **Device awareness** (high-res variants for high-density displays)
+- **Device awareness** (high-res sources for high-density displays)
+- **Source type optimization** (inline vs external based on size and network)
 
 ### 2. Renderer System
 Framework-agnostic rendering infrastructure:
@@ -25,7 +26,7 @@ Framework-agnostic rendering infrastructure:
 
 ### 3. Content Processing
 Content optimization before rendering:
-- **Variant optimization** with fallback selection
+- **Payload source optimization** with fallback selection
 - **Representation filtering** for different views (summary, full, etc.)
 - **Block-level processing** with individual optimization
 
@@ -57,15 +58,15 @@ Framework-agnostic styling with adapter pattern:
 
 ## Usage Patterns
 
-### Basic Variant Selection
+### Basic Payload Source Selection
 ```typescript
-import { VariantSelector, CapabilityDetector } from '@portable-content/typescript-sdk';
+import { PayloadSourceSelector, CapabilityDetector } from '@portable-content/typescript-sdk';
 
 const detector = new CapabilityDetector();
 const capabilities = detector.detectCapabilities();
 
-const selector = new VariantSelector();
-const bestVariant = selector.selectBestVariant(block.variants, capabilities);
+const selector = new PayloadSourceSelector();
+const bestSource = selector.selectBestPayloadSource(block, capabilities);
 ```
 
 ### Custom Renderer Implementation
@@ -77,10 +78,10 @@ class MyRenderer extends BaseBlockRenderer {
   readonly priority = 1;
 
   async render(block, props, context) {
-    const variant = this.selectVariant(block, context);
+    const payloadSource = this.selectPayloadSource(block, context);
     return {
-      content: renderWithMyFramework(variant),
-      variant
+      content: renderWithMyFramework(payloadSource),
+      payloadSource
     };
   }
 }
@@ -112,21 +113,22 @@ class MyStyleAdapter implements StyleAdapter {
 import { DefaultContentProcessor } from '@portable-content/typescript-sdk';
 
 const processor = new DefaultContentProcessor();
-const optimized = await processor.processContent(content, capabilities);
-// Each block now has optimal variants selected
+const optimized = await processor.processContent(manifest, capabilities);
+// Each block now has optimal payload sources selected
 ```
 
 ## Data Models
 
 ### Core Types
-- **ContentItem**: Top-level content with blocks and representations
-- **Block**: Individual content block with variants and payload
-- **Variant**: Specific representation (media type, URI, dimensions, size)
+- **ContentManifest**: Top-level content with blocks and representations
+- **Block**: Individual content block with BlockContent structure
+- **BlockContent**: Content structure with primary, alternatives, and source payload sources
+- **PayloadSource**: Specific content source (inline or external, with media type, URI/source, dimensions, size)
 - **Capabilities**: Client capabilities (accept types, hints)
 
 ### Rendering Types
 - **RenderContext**: Context passed to renderers (capabilities, callbacks)
-- **RenderResult**: Result of rendering (content, variant, metadata, errors)
+- **RenderResult**: Result of rendering (content, payloadSource, metadata, errors)
 - **BlockRenderer**: Interface for block renderers
 
 ## Testing
@@ -145,10 +147,11 @@ The SDK is designed to work with any UI framework:
 ```typescript
 class ReactNativeImageRenderer extends BaseImageRenderer {
   async render(block, props, context) {
-    const variant = this.selectVariant(block, context);
+    const payloadSource = this.selectPayloadSource(block, context);
+    const uri = payloadSource.type === 'external' ? payloadSource.uri : payloadSource.source;
     return {
-      content: <Image source={{ uri: variant.uri }} {...props} />,
-      variant
+      content: <Image source={{ uri }} {...props} />,
+      payloadSource
     };
   }
 }
@@ -158,11 +161,11 @@ class ReactNativeImageRenderer extends BaseImageRenderer {
 ```typescript
 class VueMarkdownRenderer extends BaseTextRenderer {
   async render(block, props, context) {
-    const variant = this.selectVariant(block, context);
-    const text = await this.getTextContent(variant);
+    const payloadSource = this.selectPayloadSource(block, context);
+    const text = await this.getTextContent(payloadSource);
     return {
       content: h('div', { innerHTML: renderMarkdown(text) }),
-      variant
+      payloadSource
     };
   }
 }
@@ -170,11 +173,11 @@ class VueMarkdownRenderer extends BaseTextRenderer {
 
 ## Performance Characteristics
 
-- **Efficient variant selection**: O(n) algorithm with smart scoring
+- **Efficient payload source selection**: O(n) algorithm with smart scoring
 - **Network-aware**: Automatically optimizes for connection speed
 - **Minimal bundle size**: Tree-shakeable with no UI dependencies
 - **Memory efficient**: Processes content in streaming fashion
-- **Cache-friendly**: Deterministic variant selection for consistent caching
+- **Cache-friendly**: Deterministic payload source selection for consistent caching
 
 ## Development Workflow
 
@@ -189,7 +192,7 @@ class VueMarkdownRenderer extends BaseTextRenderer {
 - **Custom block types**: Implement BlockRenderer interface
 - **Custom capability detection**: Extend CapabilityDetector
 - **Custom content processing**: Extend ContentProcessor
-- **Custom variant selection**: Extend VariantSelector
+- **Custom payload source selection**: Extend PayloadSourceSelector
 - **Custom styling systems**: Implement StyleAdapter interface
 - **Framework renderers**: Build renderers for any UI framework using adapters
 

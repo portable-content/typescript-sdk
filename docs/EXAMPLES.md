@@ -4,10 +4,10 @@ Comprehensive examples showing how to use the Portable Content TypeScript SDK in
 
 ## Basic Usage
 
-### 1. Simple Variant Selection
+### 1. Simple Payload Source Selection
 
 ```typescript
-import { VariantSelector, CapabilityDetector } from '@portable-content/typescript-sdk';
+import { PayloadSourceSelector, CapabilityDetector } from '@portable-content/typescript-sdk';
 
 // Detect what the client supports
 const detector = new CapabilityDetector();
@@ -18,17 +18,23 @@ console.log(capabilities);
 //   hints: { width: 1920, height: 1080, density: 2.0, network: 'FAST' }
 // }
 
-// Select best variant from available options
-const selector = new VariantSelector();
-const variants = [
-  { mediaType: 'image/avif', bytes: 40000, uri: 'image.avif' },
-  { mediaType: 'image/webp', bytes: 50000, uri: 'image.webp' },
-  { mediaType: 'image/jpeg', bytes: 80000, uri: 'image.jpg' },
-];
+// Create a block with multiple payload sources
+const block = {
+  id: 'image-1',
+  kind: 'image',
+  content: {
+    primary: { type: 'external', mediaType: 'image/webp', uri: 'image.webp' },
+    alternatives: [
+      { type: 'external', mediaType: 'image/avif', uri: 'image.avif' },
+      { type: 'external', mediaType: 'image/jpeg', uri: 'image.jpg' }
+    ]
+  }
+};
 
-const bestVariant = selector.selectBestVariant(variants, capabilities);
-console.log(bestVariant);
-// { mediaType: 'image/webp', bytes: 50000, uri: 'image.webp' }
+const selector = new PayloadSourceSelector();
+const bestSource = selector.selectBestPayloadSource(block, capabilities);
+console.log(bestSource);
+// { type: 'external', mediaType: 'image/webp', uri: 'image.webp' }
 ```
 
 ### 2. Content Processing
@@ -37,19 +43,19 @@ console.log(bestVariant);
 import { DefaultContentProcessor, MockContentFactory } from '@portable-content/typescript-sdk';
 
 // Create or fetch content
-const content = MockContentFactory.createContentItem();
+const manifest = MockContentFactory.createContentManifest();
 
 // Process for optimal delivery
 const processor = new DefaultContentProcessor();
-const optimized = await processor.processContent(content, capabilities);
+const optimized = await processor.processContent(manifest, capabilities);
 
-// Each block now has optimal variants selected
+// Each block now has optimal payload sources available
 optimized.blocks.forEach((block) => {
-  console.log(`Block ${block.id}: ${block.variants[0].mediaType}`);
+  console.log(`Block ${block.id}: ${block.content.primary.mediaType}`);
 });
 
 // Apply representation filtering
-const summary = await processor.processContent(content, capabilities, {
+const summary = await processor.processContent(manifest, capabilities, {
   representation: 'summary',
 });
 console.log(`Summary has ${summary.blocks.length} blocks`);
@@ -76,21 +82,23 @@ class RNImageRenderer extends BaseImageRenderer {
   readonly priority = 1;
 
   async render(block, props, context) {
-    const variant = this.selectVariant(block, context);
+    const payloadSource = this.selectPayloadSource(block, context);
 
-    if (!variant || !this.isImageVariant(variant)) {
-      return { content: <Text>Image unavailable</Text>, variant: null };
+    if (!payloadSource || !this.isImagePayloadSource(payloadSource)) {
+      return { content: <Text>Image unavailable</Text>, payloadSource: null };
     }
 
-    const { width, height } = this.getImageDimensions(variant);
+    const { width, height } = this.getImageDimensions(payloadSource);
     const screenWidth = context.capabilities.hints?.width || 375;
     const displayWidth = Math.min(width || screenWidth, screenWidth - 32);
+
+    const imageUri = payloadSource.type === 'external' ? payloadSource.uri : payloadSource.source;
 
     return {
       content: (
         <View style={{ padding: 16 }}>
           <Image
-            source={{ uri: variant.uri }}
+            source={{ uri: imageUri }}
             style={{ width: displayWidth, height: displayWidth * 0.6 }}
             resizeMode="cover"
           />
@@ -101,7 +109,7 @@ class RNImageRenderer extends BaseImageRenderer {
           )}
         </View>
       ),
-      variant
+      payloadSource
     };
   }
 }
@@ -112,8 +120,8 @@ class RNMarkdownRenderer extends BaseTextRenderer {
   readonly priority = 1;
 
   async render(block, props, context) {
-    const variant = this.selectVariant(block, context);
-    const text = await this.getTextContent(variant);
+    const payloadSource = this.selectPayloadSource(block, context);
+    const text = await this.getTextContent(payloadSource);
 
     // Simple markdown to React Native (you'd use a real markdown library)
     const lines = text.split('\n').map((line, index) => {
@@ -125,13 +133,13 @@ class RNMarkdownRenderer extends BaseTextRenderer {
 
     return {
       content: <View style={{ padding: 16 }}>{lines}</View>,
-      variant
+      payloadSource
     };
   }
 }
 
 // Main content component
-export const ContentRenderer: React.FC<{ content: ContentItem }> = ({ content }) => {
+export const ContentRenderer: React.FC<{ content: ContentManifest }> = ({ content }) => {
   const [renderedBlocks, setRenderedBlocks] = React.useState([]);
 
   React.useEffect(() => {
@@ -197,7 +205,7 @@ export function useContentRenderer() {
 
   const capabilities = detector.detectCapabilities();
 
-  const renderContent = async (content: ContentItem) => {
+  const renderContent = async (content: ContentManifest) => {
     // Process content for optimal delivery
     const optimized = await processor.processContent(content, capabilities);
 
@@ -211,7 +219,7 @@ export function useContentRenderer() {
           return {
             id: block.id,
             content: result.content,
-            variant: result.variant,
+            payloadSource: result.payloadSource,
           };
         }
         return null;
@@ -237,21 +245,22 @@ export function createImageRenderer() {
     readonly priority = 1;
 
     async render(block, props, context) {
-      const variant = this.selectVariant(block, context);
+      const payloadSource = this.selectPayloadSource(block, context);
 
-      if (!variant || !this.isImageVariant(variant)) {
+      if (!payloadSource || !this.isImagePayloadSource(payloadSource)) {
         return {
           content: h('div', { class: 'error' }, 'Image not available'),
-          variant: null,
+          payloadSource: null,
         };
       }
 
-      const { width, height } = this.getImageDimensions(variant);
+      const { width, height } = this.getImageDimensions(payloadSource);
+      const imageSrc = payloadSource.type === 'external' ? payloadSource.uri : payloadSource.source;
 
       return {
         content: h('figure', { class: 'image-block' }, [
           h('img', {
-            src: variant.uri,
+            src: imageSrc,
             alt: props.alt || 'Image',
             style: {
               maxWidth: '100%',
@@ -261,7 +270,7 @@ export function createImageRenderer() {
           }),
           props.caption && h('figcaption', props.caption),
         ]),
-        variant,
+        payloadSource,
         metadata: { originalWidth: width, originalHeight: height },
       };
     }
@@ -274,8 +283,8 @@ export function createMarkdownRenderer() {
     readonly priority = 1;
 
     async render(block, props, context) {
-      const variant = this.selectVariant(block, context);
-      const markdown = await this.getTextContent(variant);
+      const payloadSource = this.selectPayloadSource(block, context);
+      const markdown = await this.getTextContent(payloadSource);
 
       // Convert markdown to HTML (use your preferred markdown library)
       const html = await convertMarkdownToHTML(markdown);
@@ -285,7 +294,7 @@ export function createMarkdownRenderer() {
           class: ['markdown-content', props.theme],
           innerHTML: html,
         }),
-        variant,
+        payloadSource,
         metadata: { wordCount: markdown.split(' ').length },
       };
     }
@@ -333,7 +342,7 @@ export async function getServerSideProps(context) {
 }
 
 // Client-side renderer component
-const ContentRenderer: React.FC<{ content: ContentItem, capabilities: Capabilities }> = ({
+const ContentRenderer: React.FC<{ content: ContentManifest, capabilities: Capabilities }> = ({
   content,
   capabilities
 }) => {
@@ -418,7 +427,7 @@ class CodeRenderer extends BaseBlockRenderer<CodeProps, HTMLElement> {
 
     return {
       content: element,
-      variant: null, // No variants for code blocks
+      payloadSource: null, // No payload sources for code blocks
       metadata: { language, lines: code.split('\n').length },
     };
   }
@@ -430,7 +439,7 @@ class CodeRenderer extends BaseBlockRenderer<CodeProps, HTMLElement> {
 ```typescript
 class NetworkAwareImageRenderer extends BaseImageRenderer {
   async render(block, props, context) {
-    const variant = this.selectVariant(block, context);
+    const payloadSource = this.selectPayloadSource(block, context);
     const network = context.capabilities.hints?.network;
 
     // Adjust quality based on network
@@ -440,19 +449,20 @@ class NetworkAwareImageRenderer extends BaseImageRenderer {
 
     // Progressive loading for slow networks
     if (network !== 'FAST') {
-      return this.renderProgressiveImage(variant, quality);
+      return this.renderProgressiveImage(payloadSource, quality);
     }
 
-    return this.renderStandardImage(variant);
+    return this.renderStandardImage(payloadSource);
   }
 
-  private async renderProgressiveImage(variant, quality) {
+  private async renderProgressiveImage(payloadSource, quality) {
     // Load low-quality placeholder first
-    const placeholder = await this.generatePlaceholder(variant);
+    const placeholder = await this.generatePlaceholder(payloadSource);
+    const imageUri = payloadSource.type === 'external' ? payloadSource.uri : payloadSource.source;
 
     return {
-      content: createProgressiveImage(placeholder, variant.uri),
-      variant,
+      content: createProgressiveImage(placeholder, imageUri),
+      payloadSource,
       metadata: { loadingStrategy: 'progressive', quality },
     };
   }
@@ -479,7 +489,7 @@ class RobustRenderer extends BaseBlockRenderer {
         // Return error state
         return {
           content: this.createErrorContent(primaryError.message),
-          variant: null,
+          payloadSource: null,
           errors: [primaryError.message, fallbackError.message],
         };
       }
@@ -500,7 +510,7 @@ import { MockContentFactory } from '@portable-content/typescript-sdk/tests';
 describe('Content Rendering', () => {
   it('should render different content types', async () => {
     // Create test content
-    const content = MockContentFactory.createContentItem({
+    const content = MockContentFactory.createContentManifest({
       includeMarkdown: true,
       includeImage: true,
       includeMermaid: true,
@@ -518,14 +528,14 @@ describe('Content Rendering', () => {
       // Verify optimization worked
       expect(processed.blocks).toHaveLength(3);
       processed.blocks.forEach((block) => {
-        expect(block.variants.length).toBeGreaterThan(0);
-        expect(block.variants[0]).toBeDefined(); // Best variant selected
+        expect(block.content.primary).toBeDefined();
+        expect(block.content.primary.mediaType).toBeDefined(); // Best payload source selected
       });
     }
   });
 
   it('should handle edge cases gracefully', async () => {
-    const edgeCases = ['empty-variants', 'no-uri', 'huge-file', 'tiny-file'];
+    const edgeCases = ['empty-alternatives', 'no-uri', 'huge-file', 'tiny-file'];
 
     for (const edgeCase of edgeCases) {
       const block = MockContentFactory.createEdgeCaseBlock(edgeCase);

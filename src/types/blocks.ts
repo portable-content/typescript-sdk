@@ -1,57 +1,54 @@
 /**
- * @fileoverview Block-specific payload type definitions
+ * @fileoverview Block-specific type definitions using BlockContent structure
  */
 
-import { Block } from './core';
+import { Block, BlockContent, PayloadSource, TextPayloadSource, ImagePayloadSource } from './core';
 
 /**
- * Payload for markdown content blocks
- */
-export interface MarkdownBlockPayload {
-  /** Raw markdown source text */
-  source: string;
-}
-
-/**
- * Payload for Mermaid diagram blocks
- */
-export interface MermaidBlockPayload {
-  /** Mermaid diagram source code */
-  source: string;
-  /** Optional theme name (default, dark, forest, etc.) */
-  theme?: string;
-}
-
-/**
- * Payload for image blocks
- */
-export interface ImageBlockPayload {
-  /** URI to the original image */
-  uri: string;
-  /** Alternative text for accessibility */
-  alt?: string;
-  /** Original image width in pixels */
-  width?: number;
-  /** Original image height in pixels */
-  height?: number;
-}
-
-/**
- * Typed block interfaces for each kind
+ * Typed block interfaces for each kind using BlockContent structure
  */
 export interface MarkdownBlock extends Block {
   kind: 'markdown';
-  payload: MarkdownBlockPayload;
+  content: BlockContent & {
+    primary: TextPayloadSource;
+    source?: TextPayloadSource;
+  };
 }
 
 export interface MermaidBlock extends Block {
   kind: 'mermaid';
-  payload: MermaidBlockPayload;
+  content: BlockContent & {
+    primary: PayloadSource; // Usually SVG/PNG delivery format
+    source?: TextPayloadSource & { theme?: string }; // Mermaid source with optional theme
+  };
 }
 
 export interface ImageBlock extends Block {
   kind: 'image';
-  payload: ImageBlockPayload;
+  content: BlockContent & {
+    primary: ImagePayloadSource;
+    source?: ImagePayloadSource; // Original/raw image
+    alternatives?: ImagePayloadSource[]; // Different sizes/formats
+  };
+}
+
+export interface DocumentBlock extends Block {
+  kind: 'document';
+  content: BlockContent & {
+    primary: PayloadSource & { pages?: number }; // Usually PDF
+    alternatives?: PayloadSource[]; // Thumbnails, different formats
+  };
+}
+
+export interface CodeBlock extends Block {
+  kind: 'code';
+  content: BlockContent & {
+    primary: TextPayloadSource & {
+      language?: string;
+      lineNumbers?: boolean;
+    };
+    source?: TextPayloadSource;
+  };
 }
 
 /**
@@ -62,6 +59,8 @@ export interface BlockTypeMap {
   markdown: MarkdownBlock;
   mermaid: MermaidBlock;
   image: ImageBlock;
+  document: DocumentBlock;
+  code: CodeBlock;
 }
 
 /**
@@ -92,26 +91,58 @@ export function isImageBlock(block: Block): block is ImageBlock {
 }
 
 /**
- * Generic payload extraction with optional validation
- * Supports both known and custom block types
+ * Type guard to check if a block is a document block
  */
-export function getTypedPayload<T>(
-  block: Block,
-  validator?: (payload: unknown) => payload is T
-): T | null {
-  if (validator && !validator(block.payload)) {
-    return null;
-  }
-  return block.payload as T;
+export function isDocumentBlock(block: Block): block is DocumentBlock {
+  return block.kind === 'document';
 }
 
 /**
- * Type-safe payload extraction for known block types
- * Uses the BlockTypeMap for compile-time type safety
+ * Type guard to check if a block is a code block
  */
-export function getKnownPayload<K extends keyof BlockTypeMap>(
+export function isCodeBlock(block: Block): block is CodeBlock {
+  return block.kind === 'code';
+}
+
+/**
+ * Get typed content for a block based on its kind
+ * Returns the BlockContent with proper typing
+ */
+export function getTypedContent<K extends keyof BlockTypeMap>(
   block: Block,
   kind: K
-): BlockTypeMap[K]['payload'] | null {
-  return block.kind === kind ? (block.payload as BlockTypeMap[K]['payload']) : null;
+): BlockTypeMap[K]['content'] | null {
+  return block.kind === kind ? (block.content as BlockTypeMap[K]['content']) : null;
+}
+
+/**
+ * Get the primary content source for a block
+ */
+export function getPrimaryContent(block: Block): PayloadSource {
+  return block.content.primary;
+}
+
+/**
+ * Get the source content for editing (if available)
+ */
+export function getSourceContent(block: Block): PayloadSource | null {
+  return block.content.source || null;
+}
+
+/**
+ * Get alternative content formats
+ */
+export function getAlternativeContent(block: Block): PayloadSource[] {
+  return block.content.alternatives || [];
+}
+
+/**
+ * Find the best alternative content based on accepted media types
+ */
+export function getBestAlternative(
+  block: Block,
+  acceptedTypes: string[]
+): PayloadSource | null {
+  const alternatives = getAlternativeContent(block);
+  return alternatives.find(alt => acceptedTypes.includes(alt.mediaType)) || null;
 }

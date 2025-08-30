@@ -1,51 +1,58 @@
 /**
- * @fileoverview Variant selection algorithm implementation
+ * @fileoverview PayloadSource selection algorithm implementation
  *
- * This module implements the logic for selecting the best variant
+ * This module implements the logic for selecting the best payload source
  * based on client capabilities and preferences.
  */
 
-import type { Variant, Capabilities, CapabilityHints } from '../types';
+import type { PayloadSource, Capabilities, CapabilityHints, Block } from '../types';
 
-export interface VariantScore {
-  variant: Variant;
+export interface PayloadSourceScore {
+  payloadSource: PayloadSource;
   score: number;
   reasons: string[];
 }
 
 /**
- * Engine for selecting optimal variants based on client capabilities
+ * Engine for selecting optimal payload sources based on client capabilities
  */
-export class VariantSelector {
+export class PayloadSourceSelector {
   /**
-   * Select the best variant from available options
+   * Select the best payload source for a block based on capabilities
    */
-  selectBestVariant(variants: Variant[], capabilities: Capabilities): Variant | null {
-    if (variants.length === 0) {
+  selectBestPayloadSource(block: Block, capabilities: Capabilities): PayloadSource | null {
+    // Start with primary content
+    const primary = block.content.primary;
+    const alternatives = block.content.alternatives || [];
+
+    // Combine all available sources
+    const allSources = [primary, ...alternatives];
+
+    if (allSources.length === 0) {
       return null;
     }
 
-    // Score all acceptable variants
-    const scoredVariants = this.scoreVariants(variants, capabilities);
+    // Score all acceptable sources
+    const scoredSources = this.scorePayloadSources(allSources, capabilities);
 
-    if (scoredVariants.length === 0) {
-      // No acceptable variants, return fallback
-      return this.selectFallbackVariant(variants);
+    if (scoredSources.length === 0) {
+      // No acceptable sources, return primary as fallback
+      return primary;
     }
 
     // Sort by score (highest first) and return best
-    scoredVariants.sort((a, b) => b.score - a.score);
-    return scoredVariants[0].variant;
+    scoredSources.sort((a, b) => b.score - a.score);
+    return scoredSources[0].payloadSource;
   }
 
   /**
-   * Score all variants based on capabilities
+   * Score all payload sources based on capabilities
    */
-  private scoreVariants(variants: Variant[], capabilities: Capabilities): VariantScore[] {
-    const scored: VariantScore[] = [];
+  private scorePayloadSources(sources: PayloadSource[], capabilities: Capabilities): PayloadSourceScore[] {
+    const scored: PayloadSourceScore[] = [];
 
-    for (const variant of variants) {
-      const score = this.scoreVariant(variant, capabilities);
+    for (const source of sources) {
+      const score = this.scorePayloadSource(source, capabilities);
       if (score.score > 0) {
         scored.push(score);
       }
@@ -55,36 +62,42 @@ export class VariantSelector {
   }
 
   /**
-   * Score a single variant against capabilities
+   * Score a single payload source against capabilities
    */
-  private scoreVariant(variant: Variant, capabilities: Capabilities): VariantScore {
+  private scorePayloadSource(source: PayloadSource, capabilities: Capabilities): PayloadSourceScore {
     const reasons: string[] = [];
     let score = 0;
 
     // Check if media type is acceptable
-    const mediaTypeScore = this.scoreMediaType(variant.mediaType, capabilities.accept);
+    const mediaTypeScore = this.scoreMediaType(source.mediaType, capabilities.accept);
     if (mediaTypeScore <= 0) {
-      return { variant, score: 0, reasons: ['Media type not acceptable'] };
+      return { payloadSource: source, score: 0, reasons: ['Media type not acceptable'] };
     }
 
     score += mediaTypeScore;
     reasons.push(`Media type score: ${mediaTypeScore}`);
 
     // Add format preference bonus for modern formats
-    const formatBonus = this.getFormatPreferenceBonus(variant.mediaType);
+    const formatBonus = this.getFormatPreferenceBonus(source.mediaType);
     if (formatBonus > 0) {
       score += formatBonus;
       reasons.push(`Format preference bonus: ${formatBonus}`);
     }
 
+    // Prefer inline content for small data (reduces HTTP requests)
+    if (source.type === 'inline') {
+      score += 0.1;
+      reasons.push('Inline content bonus');
+    }
+
     // Apply capability hints
     if (capabilities.hints) {
-      const hintScore = this.applyCapabilityHints(variant, capabilities.hints);
+      const hintScore = this.applyCapabilityHints(source, capabilities.hints);
       score += hintScore.score;
       reasons.push(...hintScore.reasons);
     }
 
-    return { variant, score, reasons };
+    return { payloadSource: source, score, reasons };
   }
 
   /**
@@ -158,37 +171,42 @@ export class VariantSelector {
    * Apply capability hints to adjust score
    */
   private applyCapabilityHints(
-    variant: Variant,
+    source: PayloadSource,
     hints: CapabilityHints
   ): { score: number; reasons: string[] } {
     let score = 0;
     const reasons: string[] = [];
 
     // Size preferences
-    if (hints.width && variant.width) {
-      const sizeDiff = Math.abs(variant.width - hints.width);
+    if (hints.width && source.width) {
+      const sizeDiff = Math.abs(source.width - hints.width);
       const sizeScore = Math.max(0, 1 - sizeDiff / hints.width);
       score += sizeScore * 0.3; // 30% weight for size matching
       reasons.push(`Size match score: ${sizeScore.toFixed(2)}`);
     }
 
-    // Network optimization
-    if (hints.network && variant.bytes) {
-      const networkScore = this.scoreForNetwork(variant.bytes, hints.network);
-      score += networkScore * 0.4; // 40% weight for network optimization
-      reasons.push(`Network optimization score: ${networkScore.toFixed(2)}`);
+    // Network optimization for external sources
+    if (hints.network && source.type === 'external') {
+      // Estimate size for external content (simplified)
+      const estimatedSize = this.estimateContentSize(source);
+      if (estimatedSize > 0) {
+        const networkScore = this.scoreForNetwork(estimatedSize, hints.network);
+        score += networkScore * 0.4; // 40% weight for network optimization
+        reasons.push(`Network optimization score: ${networkScore.toFixed(2)}`);
+      }
     }
 
     // Density preferences
-    if (hints.density && variant.width && variant.height) {
-      const densityScore = this.scoreDensity(variant, hints.density);
+    if (hints.density && source.width && source.height) {
+      const densityScore = this.scoreDensity(source, hints.density);
       score += densityScore * 0.2; // 20% weight for density
       reasons.push(`Density score: ${densityScore.toFixed(2)}`);
     }
 
-    // File size preferences
-    if (hints.maxBytes && variant.bytes) {
-      if (variant.bytes > hints.maxBytes) {
+    // File size preferences for inline content
+    if (hints.maxBytes && source.type === 'inline' && source.source) {
+      const inlineSize = new Blob([source.source]).size;
+      if (inlineSize > hints.maxBytes) {
         score -= 0.5; // Penalty for exceeding max size
         reasons.push('Penalty for exceeding max file size');
       }
@@ -216,38 +234,42 @@ export class VariantSelector {
   }
 
   /**
-   * Score variant based on density requirements
+   * Score payload source based on density requirements
    */
-  private scoreDensity(variant: Variant, targetDensity: number): number {
+  private scoreDensity(source: PayloadSource, targetDensity: number): number {
     // This is a simplified density scoring
     // In practice, you might want more sophisticated logic
-    if (targetDensity >= 2.0 && variant.width && variant.width >= 1600) {
-      return 1.0; // High-res variant for high-density displays
-    } else if (targetDensity < 2.0 && variant.width && variant.width < 1600) {
-      return 1.0; // Standard-res variant for standard displays
+    if (targetDensity >= 2.0 && source.width && source.width >= 1600) {
+      return 1.0; // High-res source for high-density displays
+    } else if (targetDensity < 2.0 && source.width && source.width < 1600) {
+      return 1.0; // Standard-res source for standard displays
     }
     return 0.5;
   }
 
   /**
-   * Select fallback variant when no variants match capabilities
+   * Estimate content size for external sources
    */
-  private selectFallbackVariant(variants: Variant[]): Variant | null {
-    if (variants.length === 0) {
-      return null;
+  private estimateContentSize(source: PayloadSource): number {
+    // Simple estimation based on media type and dimensions
+    if (source.mediaType.startsWith('image/') && source.width && source.height) {
+      // Rough estimate: width * height * bytes per pixel
+      const pixelCount = source.width * source.height;
+      switch (source.mediaType) {
+        case 'image/jpeg':
+          return pixelCount * 0.5; // JPEG compression
+        case 'image/png':
+          return pixelCount * 2; // PNG less compressed
+        case 'image/webp':
+          return pixelCount * 0.3; // WebP more efficient
+        case 'image/avif':
+          return pixelCount * 0.2; // AVIF most efficient
+        default:
+          return pixelCount;
+      }
     }
 
-    // Prefer variants with URIs (accessible content)
-    const accessibleVariants = variants.filter((v) => v.uri);
-    if (accessibleVariants.length > 0) {
-      // Return smallest accessible variant as fallback
-      return accessibleVariants.reduce((smallest, current) => {
-        if (!smallest.bytes || !current.bytes) return smallest;
-        return current.bytes < smallest.bytes ? current : smallest;
-      });
-    }
-
-    // Return first variant as last resort
-    return variants[0];
+    // Default estimate for unknown types
+    return 100000; // 100KB default
   }
 }

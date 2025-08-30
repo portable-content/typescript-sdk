@@ -21,20 +21,20 @@ class MyCustomRenderer extends BaseBlockRenderer<MyProps, MyResult> {
     props: MyProps,
     context: RenderContext
   ): Promise<RenderResult<MyResult>> {
-    // 1. Select best variant for client capabilities
-    const variant = this.selectVariant(block, context);
+    // 1. Select best payload source for client capabilities
+    const payloadSource = this.selectPayloadSource(block, context);
 
-    if (!variant) {
-      return { content: null, variant: null, errors: ['No suitable variant'] };
+    if (!payloadSource) {
+      return { content: null, payloadSource: null, errors: ['No suitable payload source'] };
     }
 
     // 2. Render using your framework
-    const content = renderWithMyFramework(variant, props);
+    const content = renderWithMyFramework(payloadSource, props);
 
     // 3. Return result
     return {
       content,
-      variant,
+      payloadSource,
       metadata: { renderTime: Date.now() },
     };
   }
@@ -62,7 +62,7 @@ if (renderer) {
 
 The foundation class for all renderers. Provides:
 
-- Variant selection logic
+- Payload source selection logic
 - Error handling utilities
 - Loading state management
 - Common validation methods
@@ -75,16 +75,16 @@ class GenericRenderer extends BaseBlockRenderer<Props, Result> {
   readonly priority = 1;
 
   async render(block, props, context) {
-    // Automatic variant selection
-    const variant = this.selectVariant(block, context);
+    // Automatic payload source selection
+    const payloadSource = this.selectPayloadSource(block, context);
 
     // Error handling
     try {
-      const content = await processVariant(variant);
-      return { content, variant };
+      const content = await processPayloadSource(payloadSource);
+      return { content, payloadSource };
     } catch (error) {
       this.handleError(error, context);
-      return { content: null, variant, errors: [error.message] };
+      return { content: null, payloadSource, errors: [error.message] };
     }
   }
 }
@@ -102,17 +102,17 @@ class MarkdownRenderer extends BaseTextRenderer<MarkdownProps, HTMLElement> {
   readonly priority = 1;
 
   async render(block, props, context) {
-    const variant = this.selectVariant(block, context);
+    const payloadSource = this.selectPayloadSource(block, context);
 
-    // Built-in text fetching
-    const markdownText = await this.getTextContent(variant);
+    // Built-in text fetching (handles both inline and external sources)
+    const markdownText = await this.getTextContent(payloadSource);
 
     // Render with your markdown processor
     const html = renderMarkdown(markdownText, props.theme);
 
     return {
       content: createHTMLElement(html),
-      variant,
+      payloadSource,
       metadata: { wordCount: markdownText.split(' ').length },
     };
   }

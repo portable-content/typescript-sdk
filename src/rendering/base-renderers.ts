@@ -5,9 +5,9 @@
  * by framework-specific implementations.
  */
 
-import type { Block, Variant } from '../types';
+import type { Block, PayloadSource } from '../types';
 import type { BlockRenderer, RenderContext, RenderResult } from './interfaces';
-import { VariantSelector } from './variant-selector';
+import { PayloadSourceSelector } from './variant-selector';
 
 /**
  * Abstract base class for block renderers
@@ -15,7 +15,7 @@ import { VariantSelector } from './variant-selector';
 export abstract class BaseBlockRenderer<TProps = unknown, TResult = unknown>
   implements BlockRenderer<TProps, TResult>
 {
-  protected variantSelector = new VariantSelector();
+  protected payloadSourceSelector = new PayloadSourceSelector();
 
   abstract readonly kind: string;
   abstract readonly priority: number;
@@ -24,7 +24,7 @@ export abstract class BaseBlockRenderer<TProps = unknown, TResult = unknown>
    * Default implementation checks if block kind matches
    */
   canRender(block: Block, context: RenderContext): boolean {
-    return block.kind === this.kind && this.hasRenderableVariant(block, context);
+    return block.kind === this.kind && this.hasRenderablePayloadSource(block, context);
   }
 
   /**
@@ -51,17 +51,17 @@ export abstract class BaseBlockRenderer<TProps = unknown, TResult = unknown>
   }
 
   /**
-   * Select best variant for rendering
+   * Select best payload source for rendering
    */
-  protected selectVariant(block: Block, context: RenderContext): Variant | null {
-    return this.variantSelector.selectBestVariant(block.variants, context.capabilities);
+  protected selectPayloadSource(block: Block, context: RenderContext): PayloadSource | null {
+    return this.payloadSourceSelector.selectBestPayloadSource(block, context.capabilities);
   }
 
   /**
-   * Check if block has at least one renderable variant
+   * Check if block has at least one renderable payload source
    */
-  protected hasRenderableVariant(block: Block, context: RenderContext): boolean {
-    return this.selectVariant(block, context) !== null;
+  protected hasRenderablePayloadSource(block: Block, context: RenderContext): boolean {
+    return this.selectPayloadSource(block, context) !== null;
   }
 
   /**
@@ -93,15 +93,19 @@ export abstract class BaseTextRenderer<
   TResult = unknown,
 > extends BaseBlockRenderer<TProps, TResult> {
   /**
-   * Extract text content from variant
+   * Extract text content from payload source
    */
-  protected async getTextContent(variant: Variant): Promise<string> {
-    if (!variant.uri) {
-      throw new Error('Variant has no URI for text content');
+  protected async getTextContent(payloadSource: PayloadSource): Promise<string> {
+    if (payloadSource.type === 'inline') {
+      return payloadSource.source || '';
+    }
+
+    if (!payloadSource.uri) {
+      throw new Error('External payload source has no URI for text content');
     }
 
     try {
-      const response = await fetch(variant.uri);
+      const response = await fetch(payloadSource.uri);
       if (!response.ok) {
         throw new Error(`Failed to fetch text content: ${response.statusText}`);
       }
@@ -120,19 +124,19 @@ export abstract class BaseImageRenderer<
   TResult = unknown,
 > extends BaseBlockRenderer<TProps, TResult> {
   /**
-   * Check if variant is an image
+   * Check if payload source is an image
    */
-  protected isImageVariant(variant: Variant): boolean {
-    return variant.mediaType.startsWith('image/');
+  protected isImagePayloadSource(payloadSource: PayloadSource): boolean {
+    return payloadSource.mediaType.startsWith('image/');
   }
 
   /**
-   * Get image dimensions from variant
+   * Get image dimensions from payload source
    */
-  protected getImageDimensions(variant: Variant): { width?: number; height?: number } {
+  protected getImageDimensions(payloadSource: PayloadSource): { width?: number; height?: number } {
     return {
-      width: variant.width,
-      height: variant.height,
+      width: payloadSource.width,
+      height: payloadSource.height,
     };
   }
 }

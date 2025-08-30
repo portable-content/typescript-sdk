@@ -3,7 +3,7 @@
  */
 
 import { BaseBlockRenderer, BaseTextRenderer, BaseImageRenderer } from '../../../src/rendering/base-renderers';
-import type { Block, Variant, Capabilities } from '../../../src/types';
+import type { Block, PayloadSource, Capabilities } from '../../../src/types';
 import type { RenderContext, RenderResult } from '../../../src/rendering/interfaces';
 
 // Mock implementation of BaseBlockRenderer for testing
@@ -12,10 +12,10 @@ class TestBlockRenderer extends BaseBlockRenderer<{ text: string }, string> {
   readonly priority = 1;
 
   async render(block: Block, props: { text: string }, context: RenderContext): Promise<RenderResult<string>> {
-    const variant = this.selectVariant(block, context);
+    const payloadSource = this.selectPayloadSource(block, context);
     return {
       content: `Rendered: ${props.text}`,
-      variant
+      payloadSource
     };
   }
 }
@@ -26,22 +26,22 @@ class TestTextRenderer extends BaseTextRenderer<{ style: string }, string> {
   readonly priority = 1;
 
   async render(block: Block, props: { style: string }, context: RenderContext): Promise<RenderResult<string>> {
-    const variant = this.selectVariant(block, context);
-    if (!variant) {
-      return { content: 'No variant', variant: null };
+    const payloadSource = this.selectPayloadSource(block, context);
+    if (!payloadSource) {
+      return { content: 'No payload source', payloadSource: null };
     }
 
     try {
-      const text = await this.getTextContent(variant);
+      const text = await this.getTextContent(payloadSource);
       return {
         content: `${props.style}: ${text}`,
-        variant
+        payloadSource
       };
     } catch (error) {
       this.handleError(error as Error, context);
       return {
         content: 'Error loading text',
-        variant,
+        payloadSource,
         errors: [(error as Error).message]
       };
     }
@@ -54,15 +54,16 @@ class TestImageRenderer extends BaseImageRenderer<{ alt: string }, { src: string
   readonly priority = 1;
 
   async render(block: Block, props: { alt: string }, context: RenderContext): Promise<RenderResult<{ src: string; alt: string }>> {
-    const variant = this.selectVariant(block, context);
-    if (!variant || !this.isImageVariant(variant)) {
-      return { content: { src: '', alt: props.alt }, variant: null };
+    const payloadSource = this.selectPayloadSource(block, context);
+    if (!payloadSource || !this.isImagePayloadSource(payloadSource)) {
+      return { content: { src: '', alt: props.alt }, payloadSource: null };
     }
 
-    const dimensions = this.getImageDimensions(variant);
+    const dimensions = this.getImageDimensions(payloadSource);
+    const src = payloadSource.type === 'external' ? payloadSource.uri || '' : `data:${payloadSource.mediaType};base64,${payloadSource.source}`;
     return {
-      content: { src: variant.uri || '', alt: props.alt },
-      variant,
+      content: { src, alt: props.alt },
+      payloadSource,
       metadata: dimensions
     };
   }
@@ -83,12 +84,13 @@ describe('BaseBlockRenderer', () => {
   });
 
   describe('canRender', () => {
-    it('should return true for matching block kind with renderable variant', () => {
+    it('should return true for matching block kind with renderable payload source', () => {
       const block: Block = {
         id: 'test',
         kind: 'test',
-        payload: {},
-        variants: [{ mediaType: 'text/plain', uri: 'test.txt' }]
+        content: {
+          primary: { type: 'external', mediaType: 'text/plain', uri: 'test.txt' }
+        }
       };
 
       expect(renderer.canRender(block, mockContext)).toBe(true);
@@ -98,21 +100,24 @@ describe('BaseBlockRenderer', () => {
       const block: Block = {
         id: 'test',
         kind: 'other',
-        payload: {},
-        variants: [{ mediaType: 'text/plain', uri: 'test.txt' }]
+        content: {
+          primary: { type: 'external', mediaType: 'text/plain', uri: 'test.txt' }
+        }
       };
 
       expect(renderer.canRender(block, mockContext)).toBe(false);
     });
 
-    it('should return false when no renderable variants exist', () => {
+    it('should return false when no renderable payload sources exist', () => {
       const block: Block = {
         id: 'test',
         kind: 'test',
-        payload: {},
-        variants: [] // No variants at all
+        content: {
+          primary: { type: 'external', mediaType: 'application/unknown', uri: 'test.bin' }
+        }
       };
 
+      mockContext.capabilities.accept = ['text/plain']; // Different from block's media type
       expect(renderer.canRender(block, mockContext)).toBe(false);
     });
   });
@@ -129,20 +134,21 @@ describe('BaseBlockRenderer', () => {
     });
   });
 
-  describe('selectVariant', () => {
-    it('should select best variant based on capabilities', () => {
+  describe('selectPayloadSource', () => {
+    it('should select best payload source based on capabilities', () => {
       const block: Block = {
         id: 'test',
         kind: 'test',
-        payload: {},
-        variants: [
-          { mediaType: 'text/html', uri: 'test.html' },
-          { mediaType: 'text/plain', uri: 'test.txt' }
-        ]
+        content: {
+          primary: { type: 'external', mediaType: 'text/html', uri: 'test.html' },
+          alternatives: [
+            { type: 'external', mediaType: 'text/plain', uri: 'test.txt' }
+          ]
+        }
       };
 
-      const variant = renderer['selectVariant'](block, mockContext);
-      expect(variant?.mediaType).toBe('text/plain');
+      const payloadSource = renderer['selectPayloadSource'](block, mockContext);
+      expect(payloadSource?.mediaType).toBe('text/plain');
     });
   });
 
@@ -201,8 +207,9 @@ describe('BaseTextRenderer', () => {
   });
 
   describe('getTextContent', () => {
-    it('should fetch and return text content', async () => {
-      const variant: Variant = {
+    it('should fetch and return text content from external source', async () => {
+      const payloadSource: PayloadSource = {
+        type: 'external',
         mediaType: 'text/markdown',
         uri: 'https://example.com/test.md'
       };
@@ -212,21 +219,35 @@ describe('BaseTextRenderer', () => {
         text: () => Promise.resolve('# Test Content')
       });
 
-      const content = await renderer['getTextContent'](variant);
+      const content = await renderer['getTextContent'](payloadSource);
       expect(content).toBe('# Test Content');
       expect(fetch).toHaveBeenCalledWith('https://example.com/test.md');
     });
 
-    it('should throw error when variant has no URI', async () => {
-      const variant: Variant = {
-        mediaType: 'text/markdown'
+    it('should return inline content directly', async () => {
+      const payloadSource: PayloadSource = {
+        type: 'inline',
+        mediaType: 'text/markdown',
+        source: '# Inline Content'
       };
 
-      await expect(renderer['getTextContent'](variant)).rejects.toThrow('Variant has no URI for text content');
+      const content = await renderer['getTextContent'](payloadSource);
+      expect(content).toBe('# Inline Content');
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('should throw error when external source has no URI', async () => {
+      const payloadSource: PayloadSource = {
+        type: 'external',
+        mediaType: 'text/markdown'
+      } as PayloadSource;
+
+      await expect(renderer['getTextContent'](payloadSource)).rejects.toThrow('External payload source has no URI for text content');
     });
 
     it('should throw error when fetch fails', async () => {
-      const variant: Variant = {
+      const payloadSource: PayloadSource = {
+        type: 'external',
         mediaType: 'text/markdown',
         uri: 'https://example.com/test.md'
       };
@@ -236,18 +257,19 @@ describe('BaseTextRenderer', () => {
         statusText: 'Not Found'
       });
 
-      await expect(renderer['getTextContent'](variant)).rejects.toThrow('Failed to fetch text content: Not Found');
+      await expect(renderer['getTextContent'](payloadSource)).rejects.toThrow('Failed to fetch text content: Not Found');
     });
 
     it('should throw error when network request fails', async () => {
-      const variant: Variant = {
+      const payloadSource: PayloadSource = {
+        type: 'external',
         mediaType: 'text/markdown',
         uri: 'https://example.com/test.md'
       };
 
       (fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
 
-      await expect(renderer['getTextContent'](variant)).rejects.toThrow('Failed to load text content: Error: Network error');
+      await expect(renderer['getTextContent'](payloadSource)).rejects.toThrow('Failed to load text content: Error: Network error');
     });
   });
 });
@@ -263,51 +285,55 @@ describe('BaseImageRenderer', () => {
     };
   });
 
-  describe('isImageVariant', () => {
+  describe('isImagePayloadSource', () => {
     it('should return true for image media types', () => {
-      const variants = [
-        { mediaType: 'image/png' },
-        { mediaType: 'image/jpeg' },
-        { mediaType: 'image/webp' },
-        { mediaType: 'image/svg+xml' }
-      ];
+      const payloadSources = [
+        { type: 'external', mediaType: 'image/png', uri: 'test.png' },
+        { type: 'external', mediaType: 'image/jpeg', uri: 'test.jpg' },
+        { type: 'external', mediaType: 'image/webp', uri: 'test.webp' },
+        { type: 'external', mediaType: 'image/svg+xml', uri: 'test.svg' }
+      ] as PayloadSource[];
 
-      variants.forEach(variant => {
-        expect(renderer['isImageVariant'](variant)).toBe(true);
+      payloadSources.forEach(payloadSource => {
+        expect(renderer['isImagePayloadSource'](payloadSource)).toBe(true);
       });
     });
 
     it('should return false for non-image media types', () => {
-      const variants = [
-        { mediaType: 'text/plain' },
-        { mediaType: 'application/json' },
-        { mediaType: 'video/mp4' }
-      ];
+      const payloadSources = [
+        { type: 'inline', mediaType: 'text/plain', source: 'text' },
+        { type: 'external', mediaType: 'application/json', uri: 'data.json' },
+        { type: 'external', mediaType: 'video/mp4', uri: 'video.mp4' }
+      ] as PayloadSource[];
 
-      variants.forEach(variant => {
-        expect(renderer['isImageVariant'](variant)).toBe(false);
+      payloadSources.forEach(payloadSource => {
+        expect(renderer['isImagePayloadSource'](payloadSource)).toBe(false);
       });
     });
   });
 
   describe('getImageDimensions', () => {
     it('should return dimensions when available', () => {
-      const variant: Variant = {
+      const payloadSource: PayloadSource = {
+        type: 'external',
         mediaType: 'image/png',
+        uri: 'test.png',
         width: 800,
         height: 600
       };
 
-      const dimensions = renderer['getImageDimensions'](variant);
+      const dimensions = renderer['getImageDimensions'](payloadSource);
       expect(dimensions).toEqual({ width: 800, height: 600 });
     });
 
     it('should return undefined dimensions when not available', () => {
-      const variant: Variant = {
-        mediaType: 'image/png'
+      const payloadSource: PayloadSource = {
+        type: 'external',
+        mediaType: 'image/png',
+        uri: 'test.png'
       };
 
-      const dimensions = renderer['getImageDimensions'](variant);
+      const dimensions = renderer['getImageDimensions'](payloadSource);
       expect(dimensions).toEqual({ width: undefined, height: undefined });
     });
   });

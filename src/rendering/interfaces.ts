@@ -2,7 +2,7 @@
  * @fileoverview Framework-agnostic rendering interfaces
  */
 
-import type { Block, Variant, Capabilities } from '../types';
+import type { Block, PayloadSource, Capabilities } from '../types';
 
 /**
  * Result of rendering a block
@@ -10,8 +10,8 @@ import type { Block, Variant, Capabilities } from '../types';
 export interface RenderResult<T = unknown> {
   /** Rendered content (framework-specific) */
   content: T;
-  /** Selected variant used for rendering */
-  variant: Variant | null;
+  /** Selected payload source used for rendering */
+  payloadSource: PayloadSource | null;
   /** Any metadata about the rendering */
   metadata?: Record<string, unknown>;
   /** Errors that occurred during rendering */

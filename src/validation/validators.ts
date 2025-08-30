@@ -4,21 +4,16 @@
 
 import { z } from 'zod';
 import {
-  ContentItemSchema,
+  ContentManifestSchema,
   BlockSchema,
-  VariantSchema,
-  MarkdownBlockPayloadSchema,
-  MermaidBlockPayloadSchema,
-  ImageBlockPayloadSchema,
+  BlockContentSchema,
+  PayloadSourceSchema,
   CapabilitiesSchema,
 } from './schemas';
 import type {
-  ContentItem,
+  ContentManifest,
   Block,
-  Variant,
-  MarkdownBlockPayload,
-  MermaidBlockPayload,
-  ImageBlockPayload,
+  PayloadSource,
   Capabilities,
 } from '../types';
 
@@ -32,11 +27,11 @@ export interface ValidationResult<T> {
 }
 
 /**
- * Validate a ContentItem
+ * Validate a ContentManifest
  */
-export function validateContentItem(data: unknown): ValidationResult<ContentItem> {
+export function validateContentManifest(data: unknown): ValidationResult<ContentManifest> {
   try {
-    const result = ContentItemSchema.parse(data);
+    const result = ContentManifestSchema.parse(data);
     return { success: true, data: result };
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -48,6 +43,11 @@ export function validateContentItem(data: unknown): ValidationResult<ContentItem
     return { success: false, errors: ['Unknown validation error'] };
   }
 }
+
+/**
+ * @deprecated Use validateContentManifest instead
+ */
+export const validateContentItem = validateContentManifest;
 
 /**
  * Validate a Block
@@ -68,11 +68,11 @@ export function validateBlock(data: unknown): ValidationResult<Block> {
 }
 
 /**
- * Validate a Variant
+ * Validate a PayloadSource
  */
-export function validateVariant(data: unknown): ValidationResult<Variant> {
+export function validatePayloadSource(data: unknown): ValidationResult<PayloadSource> {
   try {
-    const result = VariantSchema.parse(data);
+    const result = PayloadSourceSchema.parse(data);
     return { success: true, data: result };
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -84,6 +84,11 @@ export function validateVariant(data: unknown): ValidationResult<Variant> {
     return { success: false, errors: ['Unknown validation error'] };
   }
 }
+
+/**
+ * @deprecated Use validatePayloadSource instead
+ */
+export const validateVariant = validatePayloadSource;
 
 /**
  * Validate Capabilities
@@ -104,49 +109,11 @@ export function validateCapabilities(data: unknown): ValidationResult<Capabiliti
 }
 
 /**
- * Type guard for MarkdownBlockPayload
+ * Validate block content structure
  */
-export function isMarkdownBlockPayload(payload: unknown): payload is MarkdownBlockPayload {
-  return MarkdownBlockPayloadSchema.safeParse(payload).success;
-}
-
-/**
- * Type guard for MermaidBlockPayload
- */
-export function isMermaidBlockPayload(payload: unknown): payload is MermaidBlockPayload {
-  return MermaidBlockPayloadSchema.safeParse(payload).success;
-}
-
-/**
- * Type guard for ImageBlockPayload
- */
-export function isImageBlockPayload(payload: unknown): payload is ImageBlockPayload {
-  return ImageBlockPayloadSchema.safeParse(payload).success;
-}
-
-/**
- * Validate block payload based on kind
- */
-export function validateBlockPayload(kind: string, payload: unknown): ValidationResult<unknown> {
+export function validateBlockContent(content: unknown): ValidationResult<unknown> {
   try {
-    let schema: z.ZodSchema;
-
-    switch (kind) {
-      case 'markdown':
-        schema = MarkdownBlockPayloadSchema;
-        break;
-      case 'mermaid':
-        schema = MermaidBlockPayloadSchema;
-        break;
-      case 'image':
-        schema = ImageBlockPayloadSchema;
-        break;
-      default:
-        // For unknown block types, accept any payload
-        return { success: true, data: payload };
-    }
-
-    const result = schema.parse(payload);
+    const result = BlockContentSchema.parse(content);
     return { success: true, data: result };
   } catch (error) {
     if (error instanceof z.ZodError) {

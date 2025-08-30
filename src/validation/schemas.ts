@@ -5,35 +5,51 @@
 import { z } from 'zod';
 
 /**
- * Schema for Variant interface
+ * Schema for PayloadSource interface
  */
-export const VariantSchema = z.object({
+export const PayloadSourceSchema = z.object({
+  type: z.enum(['inline', 'external']),
   mediaType: z.string().min(1, 'Media type is required'),
+  source: z.string().optional(),
   uri: z.string().url().optional(),
   width: z.number().int().positive().optional(),
   height: z.number().int().positive().optional(),
-  bytes: z.number().int().positive().optional(),
-  contentHash: z.string().optional(),
-  generatedBy: z.string().optional(),
-  toolVersion: z.string().optional(),
-  createdAt: z.string().datetime().optional(),
+}).refine((data) => {
+  // Inline sources must have source content
+  if (data.type === 'inline' && !data.source) {
+    return false;
+  }
+  // External sources must have URI
+  if (data.type === 'external' && !data.uri) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Inline sources must have 'source', external sources must have 'uri'"
+});
+
+/**
+ * Schema for BlockContent interface
+ */
+export const BlockContentSchema = z.object({
+  primary: PayloadSourceSchema,
+  source: PayloadSourceSchema.optional(),
+  alternatives: z.array(PayloadSourceSchema).optional(),
 });
 
 /**
  * Schema for Block interface
  */
-export const BlockSchema = z
-  .object({
-    id: z.string().min(1, 'Block ID is required'),
-    kind: z.string().min(1, 'Block kind is required'),
-    payload: z.unknown(),
-    variants: z.array(VariantSchema).default([]),
-  })
-  .transform((data) => ({
-    ...data,
-    // Ensure payload is always present, even if undefined
-    payload: data.payload ?? null,
-  }));
+export const BlockSchema = z.object({
+  id: z.string().min(1, 'Block ID is required'),
+  kind: z.string().min(1, 'Block kind is required'),
+  content: BlockContentSchema,
+});
+
+/**
+ * @deprecated Use PayloadSourceSchema instead
+ */
+export const VariantSchema = PayloadSourceSchema;
 
 /**
  * Schema for Representation interface
@@ -44,9 +60,9 @@ export const RepresentationSchema = z.object({
 });
 
 /**
- * Schema for ContentItem interface
+ * Schema for ContentManifest interface
  */
-export const ContentItemSchema = z.object({
+export const ContentManifestSchema = z.object({
   id: z.string().min(1, 'Content ID is required'),
   type: z.string().min(1, 'Content type is required'),
   title: z.string().optional(),
@@ -59,29 +75,9 @@ export const ContentItemSchema = z.object({
 });
 
 /**
- * Schema for MarkdownBlockPayload
+ * @deprecated Use ContentManifestSchema instead
  */
-export const MarkdownBlockPayloadSchema = z.object({
-  source: z.string().min(1, 'Markdown source is required'),
-});
-
-/**
- * Schema for MermaidBlockPayload
- */
-export const MermaidBlockPayloadSchema = z.object({
-  source: z.string().min(1, 'Mermaid source is required'),
-  theme: z.string().optional(),
-});
-
-/**
- * Schema for ImageBlockPayload
- */
-export const ImageBlockPayloadSchema = z.object({
-  uri: z.string().url('Invalid image URI'),
-  alt: z.string().optional(),
-  width: z.number().int().positive().optional(),
-  height: z.number().int().positive().optional(),
-});
+export const ContentItemSchema = ContentManifestSchema;
 
 /**
  * Schema for Capabilities interface

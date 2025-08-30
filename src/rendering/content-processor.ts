@@ -5,24 +5,24 @@
  * and preparing them for rendering.
  */
 
-import type { ContentItem, Block, Variant, Capabilities } from '../types';
+import type { ContentManifest, Block, PayloadSource, Capabilities } from '../types';
 import type { ContentProcessor } from './interfaces';
-import { VariantSelector } from './variant-selector';
+import { PayloadSourceSelector } from './variant-selector';
 
 /**
  * Processes content for optimal rendering
  */
 export class DefaultContentProcessor implements ContentProcessor {
-  private variantSelector = new VariantSelector();
+  private payloadSourceSelector = new PayloadSourceSelector();
 
   /**
    * Process content before rendering
    */
   async processContent(
-    content: ContentItem,
+    content: ContentManifest,
     capabilities: Capabilities,
     options?: Record<string, unknown>
-  ): Promise<ContentItem> {
+  ): Promise<ContentManifest> {
     // Apply representation filtering if specified
     let processedContent = content;
     if (options?.representation && content.representations) {
@@ -48,24 +48,18 @@ export class DefaultContentProcessor implements ContentProcessor {
     capabilities: Capabilities,
     _options?: Record<string, unknown>
   ): Promise<Block> {
-    // Select best variant for this block
-    const bestVariant = this.variantSelector.selectBestVariant(block.variants, capabilities);
+    // Select best payload source for this block
+    const bestPayloadSource = this.payloadSourceSelector.selectBestPayloadSource(block, capabilities);
 
-    // Filter variants to only include the best one (and fallbacks)
-    const filteredVariants = bestVariant
-      ? [bestVariant, ...this.getFallbackVariants(block.variants, bestVariant)]
-      : block.variants;
-
-    return {
-      ...block,
-      variants: filteredVariants,
-    };
+    // The block content structure already contains primary/source/alternatives
+    // No need to modify it - the selector will choose the best one at render time
+    return block;
   }
 
   /**
    * Apply representation filtering to content
    */
-  private applyRepresentation(content: ContentItem, representation: string): ContentItem {
+  private applyRepresentation(content: ContentManifest, representation: string): ContentManifest {
     const repr = content.representations?.[representation];
     if (!repr) {
       return content;
@@ -78,13 +72,5 @@ export class DefaultContentProcessor implements ContentProcessor {
       ...content,
       blocks: filteredBlocks,
     };
-  }
-
-  /**
-   * Get fallback variants for graceful degradation
-   */
-  private getFallbackVariants(allVariants: Variant[], selectedVariant: Variant): Variant[] {
-    // Return a few fallback variants in case the selected one fails
-    return allVariants.filter((v) => v !== selectedVariant).slice(0, 2); // Keep 2 fallbacks
   }
 }

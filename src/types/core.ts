@@ -3,26 +3,26 @@
  */
 
 /**
- * Core content item representing a piece of portable content
+ * Core content manifest representing a piece of portable content
  */
-export interface ContentItem {
-  /** Unique identifier for the content item */
+export interface ContentManifest {
+  /** Unique identifier for the content manifest */
   id: string;
   /** Content type (e.g., 'note', 'article', 'document') */
   type: string;
   /** Optional human-readable title */
   title?: string;
-  /** Optional summary or description */
+  /** Optional summary for search and AI processing */
   summary?: string;
-  /** Array of content blocks that make up this item */
+  /** Array of content blocks */
   blocks: Block[];
-  /** Named representations defining which blocks to include */
+  /** Named representations for different views */
   representations?: Record<string, Representation>;
-  /** ISO 8601 timestamp when this item was created */
+  /** ISO 8601 creation timestamp */
   createdAt?: string;
-  /** ISO 8601 timestamp when this item was last updated */
+  /** ISO 8601 last update timestamp */
   updatedAt?: string;
-  /** Identifier of the user/system that created this item */
+  /** Creator identifier */
   createdBy?: string;
 }
 
@@ -34,34 +34,88 @@ export interface Block {
   id: string;
   /** Block type identifier (e.g., 'markdown', 'mermaid', 'image') */
   kind: string;
-  /** Block-specific payload data */
-  payload: unknown;
-  /** Available variants for this block */
-  variants: Variant[];
+  /** Structured content with primary delivery format */
+  content: BlockContent;
 }
 
 /**
- * Represents a specific variant of a block (e.g., different formats, sizes)
+ * Structured content for blocks with primary delivery format and alternatives
  */
-export interface Variant {
-  /** MIME type of this variant (e.g., 'text/html', 'image/png') */
+export interface BlockContent {
+  /** Primary content format for delivery to clients */
+  primary: PayloadSource;
+  /** Optional source format for storage/editing (backend use) */
+  source?: PayloadSource;
+  /** Optional alternative delivery formats */
+  alternatives?: PayloadSource[];
+}
+
+/**
+ * Base interface for all payload sources
+ */
+export interface PayloadSource {
+  /** Content location type */
+  type: 'inline' | 'external';
+  /** MIME media type of the content */
   mediaType: string;
-  /** Optional URI where this variant can be accessed */
+  /** Raw content data (for inline content) */
+  source?: string;
+  /** URI where content can be accessed (for external content) */
   uri?: string;
-  /** Optional width in pixels (for visual content) */
+  /** Width in pixels (for visual content) */
   width?: number;
-  /** Optional height in pixels (for visual content) */
+  /** Height in pixels (for visual content) */
   height?: number;
-  /** Optional size in bytes */
+}
+
+/**
+ * Inline content stored within the payload
+ */
+export interface InlinePayloadSource extends PayloadSource {
+  type: 'inline';
+  /** Raw content data (text or base64 for binary) */
+  source: string;
+}
+
+/**
+ * External content referenced by URI
+ */
+export interface ExternalPayloadSource extends PayloadSource {
+  type: 'external';
+  /** URI where content can be accessed */
+  uri: string;
+  /** Size in bytes */
   bytes?: number;
-  /** Optional content hash for integrity verification */
+  /** SHA-256 content hash */
   contentHash?: string;
-  /** Optional identifier of the tool that generated this variant */
+  /** Tool that generated this content */
   generatedBy?: string;
-  /** Optional version of the tool that generated this variant */
+  /** Version of the generation tool */
   toolVersion?: string;
-  /** ISO 8601 timestamp when this variant was created */
+  /** ISO 8601 creation timestamp */
   createdAt?: string;
+}
+
+/**
+ * PayloadSource for text-based content
+ */
+export interface TextPayloadSource extends PayloadSource {
+  /** Character encoding */
+  encoding?: string;
+  /** Language code (ISO 639-1) */
+  language?: string;
+}
+
+/**
+ * PayloadSource for image content
+ */
+export interface ImagePayloadSource extends PayloadSource {
+  /** Width in pixels */
+  width?: number;
+  /** Height in pixels */
+  height?: number;
+  /** Alternative text for accessibility */
+  alt?: string;
 }
 
 /**

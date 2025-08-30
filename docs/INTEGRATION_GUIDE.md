@@ -82,7 +82,7 @@ export class MyRenderer extends BaseBlockRenderer {
     // Render with your framework using the styles
     return {
       content: this.renderWithFramework(block, styles, props),
-      variant: this.selectVariant(block, context),
+      payloadSource: this.selectPayloadSource(block, context),
     };
   }
 }
@@ -118,12 +118,15 @@ export const MarkdownRenderer: React.FC<BlockRendererProps> = ({ block, context 
     }
   });
 
-  // Select best variant
-  const variant = selectBestVariant(block.variants, context.capabilities);
+  // Select best payload source
+  const payloadSource = selectBestPayloadSource(block, context.capabilities);
 
-  if (!variant) {
+  if (!payloadSource) {
     return <div>No content available</div>;
   }
+
+  // Get content from payload source
+  const content = payloadSource.type === 'inline' ? payloadSource.source : await fetchContent(payloadSource.uri);
 
   // Render based on adapter output type
   if (typeof styles.container === 'string') {
@@ -131,7 +134,7 @@ export const MarkdownRenderer: React.FC<BlockRendererProps> = ({ block, context 
     return (
       <div className={styles.container}>
         <div className={styles.content}>
-          {renderMarkdown(variant.content)}
+          {renderMarkdown(content)}
         </div>
       </div>
     );
@@ -140,7 +143,7 @@ export const MarkdownRenderer: React.FC<BlockRendererProps> = ({ block, context 
     return (
       <div style={styles.container}>
         <div style={styles.content}>
-          {renderMarkdown(variant.content)}
+          {renderMarkdown(content)}
         </div>
       </div>
     );
@@ -178,11 +181,13 @@ export const MarkdownRenderer = defineComponent({
   },
 
   render() {
-    const variant = selectBestVariant(this.block.variants, this.context.capabilities);
+    const payloadSource = selectBestPayloadSource(this.block, this.context.capabilities);
 
-    if (!variant) {
+    if (!payloadSource) {
       return h('div', 'No content available');
     }
+
+    const content = payloadSource.type === 'inline' ? payloadSource.source : this.fetchContent(payloadSource.uri);
 
     return h(
       'div',
@@ -190,7 +195,7 @@ export const MarkdownRenderer = defineComponent({
         class: typeof this.styles.container === 'string' ? this.styles.container : undefined,
         style: typeof this.styles.container === 'object' ? this.styles.container : undefined,
       },
-      [renderMarkdown(variant.content)]
+      [renderMarkdown(content)]
     );
   },
 });
@@ -224,16 +229,18 @@ export const MarkdownRenderer: React.FC<Props> = ({ block, context }) => {
     }
   });
 
-  const variant = selectBestVariant(block.variants, context.capabilities);
+  const payloadSource = selectBestPayloadSource(block, context.capabilities);
 
-  if (!variant) {
+  if (!payloadSource) {
     return <Text>No content available</Text>;
   }
+
+  const content = payloadSource.type === 'inline' ? payloadSource.source : await fetchContent(payloadSource.uri);
 
   return (
     <View style={styles.container}>
       <Text style={styles.text}>
-        {variant.content}
+        {content}
       </Text>
     </View>
   );

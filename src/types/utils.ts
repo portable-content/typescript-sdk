@@ -2,79 +2,79 @@
  * @fileoverview Utility types and builder classes
  */
 
-import type { ContentItem, Block, Variant } from './core';
+import type { ContentManifest, Block, BlockContent, PayloadSource } from './core';
 import type { BlockTypeMap } from './blocks';
 
 /**
- * Utility type to extract payload type from block kind
+ * Utility type to extract content type from block kind
  * Uses BlockTypeMap for extensibility
  */
-export type PayloadForKind<K extends keyof BlockTypeMap> = BlockTypeMap[K]['payload'];
+export type ContentForKind<K extends keyof BlockTypeMap> = BlockTypeMap[K]['content'];
 
 /**
  * Utility type for unknown block kinds (fallback)
  */
-export type PayloadForUnknownKind<K extends string> = K extends keyof BlockTypeMap
-  ? PayloadForKind<K>
-  : unknown;
+export type ContentForUnknownKind<K extends string> = K extends keyof BlockTypeMap
+  ? ContentForKind<K>
+  : BlockContent;
 
 /**
  * Utility type for partial updates
  */
-export type PartialContentItem = Partial<Omit<ContentItem, 'id' | 'blocks'>> & {
+export type PartialContentManifest = Partial<Omit<ContentManifest, 'id' | 'blocks'>> & {
   id: string;
   blocks?: Partial<Block>[];
 };
 
 /**
- * Builder class for creating ContentItems
+ * Builder class for creating ContentManifests
  */
-export class ContentItemBuilder {
-  private item: Partial<ContentItem> = {
+export class ContentManifestBuilder {
+  private manifest: Partial<ContentManifest> = {
     blocks: [],
   };
 
   constructor(id: string, type: string) {
-    this.item.id = id;
-    this.item.type = type;
+    this.manifest.id = id;
+    this.manifest.type = type;
   }
 
   title(title: string): this {
-    this.item.title = title;
+    this.manifest.title = title;
     return this;
   }
 
   summary(summary: string): this {
-    this.item.summary = summary;
+    this.manifest.summary = summary;
     return this;
   }
 
   addBlock(block: Block): this {
-    this.item.blocks = [...(this.item.blocks || []), block];
+    this.manifest.blocks = [...(this.manifest.blocks || []), block];
     return this;
   }
 
   addRepresentation(name: string, representation: import('./core').Representation): this {
-    this.item.representations = {
-      ...this.item.representations,
+    this.manifest.representations = {
+      ...this.manifest.representations,
       [name]: representation,
     };
     return this;
   }
 
   createdBy(createdBy: string): this {
-    this.item.createdBy = createdBy;
+    this.manifest.createdBy = createdBy;
     return this;
   }
 
-  build(): ContentItem {
+  build(): ContentManifest {
     const now = new Date().toISOString();
     return {
-      ...this.item,
-      blocks: this.item.blocks || [],
-      createdAt: this.item.createdAt || now,
-      updatedAt: this.item.updatedAt || now,
-    } as ContentItem;
+      ...this.manifest,
+      blocks: this.manifest.blocks || [],
+      createdAt: this.manifest.createdAt || now,
+      updatedAt: this.manifest.updatedAt || now,
+    } as ContentManifest;
   }
 }
 
@@ -83,74 +83,99 @@ export class ContentItemBuilder {
  * Supports both known and unknown block types
  */
 export class BlockBuilder<K extends string> {
-  private block: Partial<Block> = {
-    variants: [],
-  };
+  private block: Partial<Block> = {};
 
   constructor(id: string, kind: K) {
     this.block.id = id;
     this.block.kind = kind;
   }
 
-  payload(payload: PayloadForUnknownKind<K>): this {
-    this.block.payload = payload;
+  content(content: ContentForUnknownKind<K>): this {
+    this.block.content = content;
     return this;
   }
 
-  addVariant(variant: Variant): this {
-    this.block.variants = [...(this.block.variants || []), variant];
+  primary(primary: PayloadSource): this {
+    if (!this.block.content) {
+      this.block.content = { primary };
+    } else {
+      this.block.content.primary = primary;
+    }
+    return this;
+  }
+
+  source(source: PayloadSource): this {
+    if (!this.block.content) {
+      throw new Error('Must set primary content before source');
+    }
+    this.block.content.source = source;
+    return this;
+  }
+
+  addAlternative(alternative: PayloadSource): this {
+    if (!this.block.content) {
+      throw new Error('Must set primary content before alternatives');
+    }
+    this.block.content.alternatives = [...(this.block.content.alternatives || []), alternative];
     return this;
   }
 
   build(): Block {
+    if (!this.block.content?.primary) {
+      throw new Error('Block must have primary content');
+    }
     return this.block as Block;
   }
 }
 
 /**
- * Builder class for creating Variants
+ * Builder class for creating PayloadSources
  */
-export class VariantBuilder {
-  private variant: Partial<Variant> = {};
+export class PayloadSourceBuilder {
+  private payloadSource: Partial<PayloadSource> = {};
 
-  constructor(mediaType: string) {
-    this.variant.mediaType = mediaType;
+  constructor(type: 'inline' | 'external', mediaType: string) {
+    this.payloadSource.type = type;
+    this.payloadSource.mediaType = mediaType;
+  }
+
+  static inline(mediaType: string): PayloadSourceBuilder {
+    return new PayloadSourceBuilder('inline', mediaType);
+  }
+
+  static external(mediaType: string): PayloadSourceBuilder {
+    return new PayloadSourceBuilder('external', mediaType);
+  }
+
+  source(source: string): this {
+    if (this.payloadSource.type !== 'inline') {
+      throw new Error('Source can only be set for inline payload sources');
+    }
+    this.payloadSource.source = source;
+    return this;
   }
 
   uri(uri: string): this {
-    this.variant.uri = uri;
+    if (this.payloadSource.type !== 'external') {
+      throw new Error('URI can only be set for external payload sources');
+    }
+    this.payloadSource.uri = uri;
     return this;
   }
 
   dimensions(width: number, height: number): this {
-    this.variant.width = width;
-    this.variant.height = height;
+    this.payloadSource.width = width;
+    this.payloadSource.height = height;
     return this;
   }
 
-  bytes(bytes: number): this {
-    this.variant.bytes = bytes;
-    return this;
-  }
-
-  contentHash(hash: string): this {
-    this.variant.contentHash = hash;
-    return this;
-  }
-
-  generatedBy(tool: string, version?: string): this {
-    this.variant.generatedBy = tool;
-    if (version) {
-      this.variant.toolVersion = version;
+  build(): PayloadSource {
+    if (this.payloadSource.type === 'inline' && !this.payloadSource.source) {
+      throw new Error('Inline payload source must have source content');
     }
-    return this;
-  }
-
-  build(): Variant {
-    const now = new Date().toISOString();
-    return {
-      ...this.variant,
-      createdAt: this.variant.createdAt || now,
-    } as Variant;
+    if (this.payloadSource.type === 'external' && !this.payloadSource.uri) {
+      throw new Error('External payload source must have URI');
+    }
+    return this.payloadSource as PayloadSource;
   }
 }

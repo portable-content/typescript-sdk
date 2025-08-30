@@ -4,25 +4,25 @@ Complete API reference for the Portable Content TypeScript SDK.
 
 ## Core Classes
 
-### VariantSelector
+### PayloadSourceSelector
 
-Intelligently selects the best content variant based on client capabilities.
+Intelligently selects the best payload source based on client capabilities.
 
 ```typescript
-class VariantSelector {
-  selectBestVariant(variants: Variant[], capabilities: Capabilities): Variant | null;
+class PayloadSourceSelector {
+  selectBestPayloadSource(block: Block, capabilities: Capabilities): PayloadSource | null;
 }
 ```
 
 **Methods:**
 
-- `selectBestVariant(variants, capabilities)` - Returns the optimal variant or null if none suitable
+- `selectBestPayloadSource(block, capabilities)` - Returns the optimal payload source or null if none suitable
 
 **Example:**
 
 ```typescript
-const selector = new VariantSelector();
-const best = selector.selectBestVariant(block.variants, capabilities);
+const selector = new PayloadSourceSelector();
+const best = selector.selectBestPayloadSource(block, capabilities);
 ```
 
 ### DefaultRendererRegistry
@@ -54,10 +54,10 @@ Processes content for optimal rendering.
 ```typescript
 class DefaultContentProcessor implements ContentProcessor {
   processContent(
-    content: ContentItem,
+    manifest: ContentManifest,
     capabilities: Capabilities,
     options?: Record<string, unknown>
-  ): Promise<ContentItem>;
+  ): Promise<ContentManifest>;
   processBlock(
     block: Block,
     capabilities: Capabilities,
@@ -68,7 +68,7 @@ class DefaultContentProcessor implements ContentProcessor {
 
 **Methods:**
 
-- `processContent(content, capabilities, options?)` - Process entire content item
+- `processContent(manifest, capabilities, options?)` - Process entire content manifest
 - `processBlock(block, capabilities, options?)` - Process individual block
 
 **Options:**
@@ -119,7 +119,7 @@ abstract class BaseBlockRenderer<TProps = unknown, TResult = unknown>
   getDefaultProps(): Partial<TProps>;
   validateProps(props: TProps): string[];
 
-  protected selectVariant(block: Block, context: RenderContext): Variant | null;
+  protected selectPayloadSource(block: Block, context: RenderContext): PayloadSource | null;
   protected handleError(error: Error, context: RenderContext): void;
   protected setLoading(loading: boolean, context: RenderContext): void;
 }
@@ -134,13 +134,13 @@ abstract class BaseTextRenderer<TProps = unknown, TResult = unknown> extends Bas
   TProps,
   TResult
 > {
-  protected async getTextContent(variant: Variant): Promise<string>;
+  protected async getTextContent(payloadSource: PayloadSource): Promise<string>;
 }
 ```
 
 **Additional methods:**
 
-- `getTextContent(variant)` - Fetch text content from variant URI
+- `getTextContent(payloadSource)` - Get text content from payload source (inline or external)
 
 ### BaseImageRenderer
 
@@ -151,15 +151,15 @@ abstract class BaseImageRenderer<TProps = unknown, TResult = unknown> extends Ba
   TProps,
   TResult
 > {
-  protected isImageVariant(variant: Variant): boolean;
-  protected getImageDimensions(variant: Variant): { width?: number; height?: number };
+  protected isImagePayloadSource(payloadSource: PayloadSource): boolean;
+  protected getImageDimensions(payloadSource: PayloadSource): { width?: number; height?: number };
 }
 ```
 
 **Additional methods:**
 
-- `isImageVariant(variant)` - Check if variant is an image
-- `getImageDimensions(variant)` - Get image dimensions from variant
+- `isImagePayloadSource(payloadSource)` - Check if payload source is an image
+- `getImageDimensions(payloadSource)` - Get image dimensions from payload source
 
 ## Interfaces
 
@@ -199,7 +199,7 @@ Result returned by renderers.
 ```typescript
 interface RenderResult<T = unknown> {
   content: T;
-  variant: Variant | null;
+  payloadSource: PayloadSource | null;
   metadata?: Record<string, unknown>;
   errors?: string[];
 }
@@ -210,7 +210,7 @@ interface RenderResult<T = unknown> {
 ### Core Types
 
 ```typescript
-interface ContentItem {
+interface ContentManifest {
   id: string;
   type: string;
   title?: string;
@@ -225,16 +225,27 @@ interface ContentItem {
 interface Block {
   id: string;
   kind: string;
-  payload: Record<string, unknown>;
-  variants: Variant[];
+  content: BlockContent;
 }
 
-interface Variant {
+interface BlockContent {
+  primary: PayloadSource;
+  alternatives?: PayloadSource[];
+  source?: PayloadSource;
+}
+
+interface PayloadSource {
+  type: 'inline' | 'external';
   mediaType: string;
-  uri?: string;
+  source?: string; // For inline content
+  uri?: string; // For external content
   bytes?: number;
   width?: number;
   height?: number;
+  contentHash?: string;
+  generatedBy?: string;
+  toolVersion?: string;
+  createdAt?: string;
 }
 ```
 

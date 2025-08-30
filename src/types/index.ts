@@ -3,16 +3,25 @@
  */
 
 // Core types
-export type { ContentItem, Block, Variant, Representation } from './core';
+export type {
+  ContentManifest,
+  Block,
+  BlockContent,
+  PayloadSource,
+  InlinePayloadSource,
+  ExternalPayloadSource,
+  TextPayloadSource,
+  ImagePayloadSource,
+  Representation
+} from './core';
 
 // Block-specific types
 export type {
-  MarkdownBlockPayload,
-  MermaidBlockPayload,
-  ImageBlockPayload,
   MarkdownBlock,
   MermaidBlock,
   ImageBlock,
+  DocumentBlock,
+  CodeBlock,
   BlockTypeMap,
   TypedBlock,
 } from './blocks';
@@ -22,8 +31,13 @@ export {
   isMarkdownBlock,
   isMermaidBlock,
   isImageBlock,
-  getTypedPayload,
-  getKnownPayload,
+  isDocumentBlock,
+  isCodeBlock,
+  getTypedContent,
+  getPrimaryContent,
+  getSourceContent,
+  getAlternativeContent,
+  getBestAlternative,
 } from './blocks';
 
 // Capability types
@@ -44,6 +58,6 @@ export type {
 export { defaultTheme, darkTheme } from './styling';
 
 // Utility types and builders
-export type { PayloadForKind, PayloadForUnknownKind, PartialContentItem } from './utils';
+export type { ContentForKind, ContentForUnknownKind, PartialContentManifest } from './utils';
 
-export { ContentItemBuilder, BlockBuilder, VariantBuilder } from './utils';
+export { ContentManifestBuilder, BlockBuilder, PayloadSourceBuilder } from './utils';

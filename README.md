@@ -1,17 +1,17 @@
 # Portable Content TypeScript SDK
 
-A framework-agnostic TypeScript SDK for the Portable Content System, providing intelligent content rendering, variant selection, and type-safe data models.
+A framework-agnostic TypeScript SDK for the Portable Content System, providing intelligent content rendering, payload source selection, and type-safe data models.
 
 [![codecov](https://codecov.io/gh/portable-content/typescript-sdk/graph/badge.svg?token=kny2WCQvHx)](https://codecov.io/gh/portable-content/typescript-sdk)
 
 ## Features
 
 - 🎨 **Framework-Agnostic Rendering**: Works with React Native, Vue, React Web, and any UI framework
-- 🧠 **Intelligent Variant Selection**: Automatically selects optimal content variants based on device capabilities
-- � **Network-Aware Optimization**: Adapts content delivery for different network conditions
+- 🧠 **Intelligent Content Selection**: Automatically selects optimal content sources based on device capabilities
+- 🌐 **Network-Aware Optimization**: Adapts content delivery for different network conditions
 - 🔒 **Type-Safe**: Full TypeScript support with strict type checking
 - 📱 **Capability Detection**: Automatic client capability detection (screen size, formats, network)
-- 🎯 **Content Processing**: Advanced content optimization and representation filtering
+- 🎯 **Content Processing**: Advanced content optimization with primary/source/alternatives pattern
 - 🧪 **Well-Tested**: 95+ tests with comprehensive coverage
 - ⚡ **Performance Focused**: Efficient algorithms with minimal bundle size
 
@@ -27,7 +27,7 @@ npm install @portable-content/typescript-sdk
 
 ```typescript
 import {
-  VariantSelector,
+  PayloadSourceSelector,
   DefaultContentProcessor,
   CapabilityDetector,
   MockContentFactory
@@ -39,12 +39,14 @@ const capabilities = detector.detectCapabilities();
 
 // Process content for optimal delivery
 const processor = new DefaultContentProcessor();
-const content = MockContentFactory.createContentItem(); // Or fetch from your API
+const manifest = MockContentFactory.createContentManifest(); // Or fetch from your API
 
-const optimizedContent = await processor.processContent(content, capabilities);
+const optimizedManifest = await processor.processContent(manifest, capabilities);
 
-// Each block now has the best variants selected for the client
-console.log(optimizedContent.blocks[0].variants[0]); // Best variant for this client
+// Each block now has the best payload source selected for the client
+const selector = new PayloadSourceSelector();
+const bestSource = selector.selectBestPayloadSource(optimizedManifest.blocks[0], capabilities);
+console.log(bestSource); // Best payload source for this client
 ```
 
 ### Custom Renderer Implementation
@@ -57,11 +59,11 @@ class MyMarkdownRenderer extends BaseBlockRenderer {
   readonly priority = 1;
 
   async render(block, props, context) {
-    const variant = this.selectVariant(block, context);
+    const payloadSource = this.selectPayloadSource(block, context);
     // Render with your framework (React Native, Vue, etc.)
     return {
-      content: renderMarkdownWithMyFramework(variant),
-      variant
+      content: renderMarkdownWithMyFramework(payloadSource),
+      payloadSource
     };
   }
 }

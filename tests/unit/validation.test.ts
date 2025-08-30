@@ -3,20 +3,18 @@
  */
 
 import {
-  validateContentItem,
+  validateContentManifest,
+  validateContentItem, // deprecated alias
   validateBlock,
-  validateVariant,
+  validatePayloadSource,
   validateCapabilities,
-  validateBlockPayload,
-  isMarkdownBlockPayload,
-  isMermaidBlockPayload,
-  isImageBlockPayload,
+  validateBlockContent,
 } from '../../src/validation';
 
 describe('Validation', () => {
-  describe('validateContentItem', () => {
-    it('should validate a valid ContentItem', () => {
-      const validItem = {
+  describe('validateContentManifest', () => {
+    it('should validate a valid ContentManifest', () => {
+      const validManifest = {
         id: 'test-id',
         type: 'document',
         title: 'Test Document',
@@ -24,29 +22,45 @@ describe('Validation', () => {
           {
             id: 'block-1',
             kind: 'markdown',
-            payload: { source: '# Test' },
-            variants: []
+            content: {
+              primary: {
+                type: 'inline',
+                mediaType: 'text/markdown',
+                source: '# Test'
+              }
+            }
           }
         ]
       };
 
-      const result = validateContentItem(validItem);
+      const result = validateContentManifest(validManifest);
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
       expect(result.errors).toBeUndefined();
     });
 
-    it('should reject invalid ContentItem', () => {
-      const invalidItem = {
+    it('should reject invalid ContentManifest', () => {
+      const invalidManifest = {
         // Missing required id
         type: 'document',
         blocks: []
       };
 
-      const result = validateContentItem(invalidItem);
+      const result = validateContentManifest(invalidManifest);
       expect(result.success).toBe(false);
       expect(result.errors).toBeDefined();
       expect(result.errors![0]).toContain('id');
+    });
+
+    it('should work with deprecated validateContentItem alias', () => {
+      const validManifest = {
+        id: 'test-id',
+        type: 'document',
+        blocks: []
+      };
+
+      const result = validateContentItem(validManifest);
+      expect(result.success).toBe(true);
     });
   });
 
@@ -55,8 +69,13 @@ describe('Validation', () => {
       const validBlock = {
         id: 'block-1',
         kind: 'markdown',
-        payload: { source: '# Test' },
-        variants: []
+        content: {
+          primary: {
+            type: 'inline',
+            mediaType: 'text/markdown',
+            source: '# Test'
+          }
+        }
       };
 
       const result = validateBlock(validBlock);
@@ -68,8 +87,13 @@ describe('Validation', () => {
       const invalidBlock = {
         // Missing required id
         kind: 'markdown',
-        payload: { source: '# Test' },
-        variants: []
+        content: {
+          primary: {
+            type: 'inline',
+            mediaType: 'text/markdown',
+            source: '# Test'
+          }
+        }
       };
 
       const result = validateBlock(invalidBlock);
@@ -78,27 +102,53 @@ describe('Validation', () => {
     });
   });
 
-  describe('validateVariant', () => {
-    it('should validate a valid Variant', () => {
-      const validVariant = {
+  describe('validatePayloadSource', () => {
+    it('should validate a valid external PayloadSource', () => {
+      const validPayloadSource = {
+        type: 'external',
         mediaType: 'text/html',
         uri: 'https://example.com/content.html',
         width: 800,
         height: 600
       };
 
-      const result = validateVariant(validVariant);
+      const result = validatePayloadSource(validPayloadSource);
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
     });
 
-    it('should reject invalid Variant', () => {
-      const invalidVariant = {
-        // Missing required mediaType
-        uri: 'https://example.com/content.html'
+    it('should validate a valid inline PayloadSource', () => {
+      const validPayloadSource = {
+        type: 'inline',
+        mediaType: 'text/markdown',
+        source: '# Test Content'
       };
 
-      const result = validateVariant(invalidVariant);
+      const result = validatePayloadSource(validPayloadSource);
+      expect(result.success).toBe(true);
+      expect(result.data).toBeDefined();
+    });
+
+    it('should reject invalid PayloadSource', () => {
+      const invalidPayloadSource = {
+        type: 'external',
+        mediaType: 'text/html'
+        // Missing required uri for external type
+      };
+
+      const result = validatePayloadSource(invalidPayloadSource);
+      expect(result.success).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+
+    it('should reject inline PayloadSource without source', () => {
+      const invalidPayloadSource = {
+        type: 'inline',
+        mediaType: 'text/plain'
+        // Missing required source for inline type
+      };
+
+      const result = validatePayloadSource(invalidPayloadSource);
       expect(result.success).toBe(false);
       expect(result.errors).toBeDefined();
     });
@@ -134,59 +184,49 @@ describe('Validation', () => {
     });
   });
 
-  describe('Block Payload Type Guards', () => {
-    it('should identify valid MarkdownBlockPayload', () => {
-      const validPayload = { source: '# Test Markdown' };
-      expect(isMarkdownBlockPayload(validPayload)).toBe(true);
-    });
-
-    it('should reject invalid MarkdownBlockPayload', () => {
-      const invalidPayload = { content: 'missing source field' };
-      expect(isMarkdownBlockPayload(invalidPayload)).toBe(false);
-    });
-
-    it('should identify valid MermaidBlockPayload', () => {
-      const validPayload = { source: 'graph TD; A-->B', theme: 'dark' };
-      expect(isMermaidBlockPayload(validPayload)).toBe(true);
-    });
-
-    it('should identify valid ImageBlockPayload', () => {
-      const validPayload = { 
-        uri: 'https://example.com/image.png',
-        alt: 'Test image',
-        width: 800,
-        height: 600
+  describe('validateBlockContent', () => {
+    it('should validate valid BlockContent', () => {
+      const validBlockContent = {
+        primary: {
+          type: 'inline',
+          mediaType: 'text/markdown',
+          source: '# Test Markdown'
+        }
       };
-      expect(isImageBlockPayload(validPayload)).toBe(true);
-    });
 
-    it('should reject invalid ImageBlockPayload', () => {
-      const invalidPayload = { uri: 'not-a-valid-url' };
-      expect(isImageBlockPayload(invalidPayload)).toBe(false);
-    });
-  });
-
-  describe('validateBlockPayload', () => {
-    it('should validate known block payload types', () => {
-      const markdownPayload = { source: '# Test' };
-      const result = validateBlockPayload('markdown', markdownPayload);
-      
+      const result = validateBlockContent(validBlockContent);
       expect(result.success).toBe(true);
-      expect(result.data).toEqual(markdownPayload);
+      expect(result.data).toBeDefined();
     });
 
-    it('should accept unknown block types', () => {
-      const customPayload = { customField: 'value' };
-      const result = validateBlockPayload('custom-type', customPayload);
-      
+    it('should validate BlockContent with alternatives', () => {
+      const validBlockContent = {
+        primary: {
+          type: 'external',
+          mediaType: 'image/png',
+          uri: 'https://example.com/image.png'
+        },
+        alternatives: [
+          {
+            type: 'external',
+            mediaType: 'image/webp',
+            uri: 'https://example.com/image.webp'
+          }
+        ]
+      };
+
+      const result = validateBlockContent(validBlockContent);
       expect(result.success).toBe(true);
-      expect(result.data).toEqual(customPayload);
+      expect(result.data).toBeDefined();
     });
 
-    it('should reject invalid known payload types', () => {
-      const invalidPayload = { notSource: 'invalid' };
-      const result = validateBlockPayload('markdown', invalidPayload);
-      
+    it('should reject invalid BlockContent', () => {
+      const invalidBlockContent = {
+        // Missing required primary
+        alternatives: []
+      };
+
+      const result = validateBlockContent(invalidBlockContent);
       expect(result.success).toBe(false);
       expect(result.errors).toBeDefined();
     });
