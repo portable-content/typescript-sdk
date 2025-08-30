@@ -12,7 +12,7 @@ export type {
   ExternalPayloadSource,
   TextPayloadSource,
   ImagePayloadSource,
-  Representation
+  Representation,
 } from './core';
 
 // Block-specific types

@@ -37,8 +37,8 @@ export class PayloadSourceSelector {
 
     if (scoredSources.length === 0) {
       // Check if any accept type is a catch-all
-      const hasCatchAll = capabilities.accept.some(accept =>
-        accept.split(';')[0].trim() === '*/*'
+      const hasCatchAll = capabilities.accept.some(
+        (accept) => accept.split(';')[0].trim() === '*/*'
       );
 
       if (hasCatchAll) {
@@ -58,7 +58,10 @@ export class PayloadSourceSelector {
   /**
    * Score all payload sources based on capabilities
    */
-  private scorePayloadSources(sources: PayloadSource[], capabilities: Capabilities): PayloadSourceScore[] {
+  private scorePayloadSources(
+    sources: PayloadSource[],
+    capabilities: Capabilities
+  ): PayloadSourceScore[] {
     const scored: PayloadSourceScore[] = [];
 
     for (const source of sources) {
@@ -74,7 +77,10 @@ export class PayloadSourceSelector {
   /**
    * Score a single payload source against capabilities
    */
-  private scorePayloadSource(source: PayloadSource, capabilities: Capabilities): PayloadSourceScore {
+  private scorePayloadSource(
+    source: PayloadSource,
+    capabilities: Capabilities
+  ): PayloadSourceScore {
     const reasons: string[] = [];
     let score = 0;
 

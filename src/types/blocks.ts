@@ -139,10 +139,7 @@ export function getAlternativeContent(block: Block): PayloadSource[] {
 /**
  * Find the best alternative content based on accepted media types
  */
-export function getBestAlternative(
-  block: Block,
-  acceptedTypes: string[]
-): PayloadSource | null {
+export function getBestAlternative(block: Block, acceptedTypes: string[]): PayloadSource | null {
   const alternatives = getAlternativeContent(block);
-  return alternatives.find(alt => acceptedTypes.includes(alt.mediaType)) || null;
+  return alternatives.find((alt) => acceptedTypes.includes(alt.mediaType)) || null;
 }

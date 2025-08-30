@@ -7,26 +7,31 @@ import { z } from 'zod';
 /**
  * Schema for PayloadSource interface
  */
-export const PayloadSourceSchema = z.object({
-  type: z.enum(['inline', 'external']),
-  mediaType: z.string().min(1, 'Media type is required'),
-  source: z.string().optional(),
-  uri: z.string().url().optional(),
-  width: z.number().int().positive().optional(),
-  height: z.number().int().positive().optional(),
-}).refine((data) => {
-  // Inline sources must have source content
-  if (data.type === 'inline' && !data.source) {
-    return false;
-  }
-  // External sources must have URI
-  if (data.type === 'external' && !data.uri) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Inline sources must have 'source', external sources must have 'uri'"
-});
+export const PayloadSourceSchema = z
+  .object({
+    type: z.enum(['inline', 'external']),
+    mediaType: z.string().min(1, 'Media type is required'),
+    source: z.string().optional(),
+    uri: z.string().url().optional(),
+    width: z.number().int().positive().optional(),
+    height: z.number().int().positive().optional(),
+  })
+  .refine(
+    (data) => {
+      // Inline sources must have source content
+      if (data.type === 'inline' && !data.source) {
+        return false;
+      }
+      // External sources must have URI
+      if (data.type === 'external' && !data.uri) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Inline sources must have 'source', external sources must have 'uri'",
+    }
+  );
 
 /**
  * Schema for BlockContent interface

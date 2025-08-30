@@ -10,12 +10,7 @@ import {
   PayloadSourceSchema,
   CapabilitiesSchema,
 } from './schemas';
-import type {
-  ContentManifest,
-  Block,
-  PayloadSource,
-  Capabilities,
-} from '../types';
+import type { ContentManifest, Block, PayloadSource, Capabilities } from '../types';
 
 /**
  * Validation result type
