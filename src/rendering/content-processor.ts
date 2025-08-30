@@ -5,7 +5,7 @@
  * and preparing them for rendering.
  */
 
-import type { ContentManifest, Block, PayloadSource, Capabilities } from '../types';
+import type { ContentManifest, Block, Capabilities } from '../types';
 import type { ContentProcessor } from './interfaces';
 import { PayloadSourceSelector } from './variant-selector';
 
@@ -45,12 +45,9 @@ export class DefaultContentProcessor implements ContentProcessor {
    */
   async processBlock(
     block: Block,
-    capabilities: Capabilities,
+    _capabilities: Capabilities,
     _options?: Record<string, unknown>
   ): Promise<Block> {
-    // Select best payload source for this block
-    const bestPayloadSource = this.payloadSourceSelector.selectBestPayloadSource(block, capabilities);
-
     // The block content structure already contains primary/source/alternatives
     // No need to modify it - the selector will choose the best one at render time
     return block;
