@@ -7,7 +7,9 @@
 
 import type { Block, PayloadSource } from '../types';
 import type { BlockRenderer, RenderContext, RenderResult } from './interfaces';
+import type { ContentResolver, RenderingContent } from './content-resolution';
 import { PayloadSourceSelector } from './variant-selector';
+import { DefaultContentResolver } from './resolver';
 
 /**
  * Abstract base class for block renderers
@@ -16,6 +18,7 @@ export abstract class BaseBlockRenderer<TProps = unknown, TResult = unknown>
   implements BlockRenderer<TProps, TResult>
 {
   protected payloadSourceSelector = new PayloadSourceSelector();
+  protected contentResolver: ContentResolver = new DefaultContentResolver();
 
   abstract readonly kind: string;
   abstract readonly priority: number;
@@ -55,6 +58,20 @@ export abstract class BaseBlockRenderer<TProps = unknown, TResult = unknown>
    */
   protected selectPayloadSource(block: Block, context: RenderContext): PayloadSource | null {
     return this.payloadSourceSelector.selectBestPayloadSource(block, context.capabilities);
+  }
+
+  /**
+   * Resolve content for rendering from the best payload source
+   */
+  protected async resolveRenderingContent(block: Block, context: RenderContext): Promise<RenderingContent> {
+    return this.contentResolver.resolveBlockContent(block, context.capabilities);
+  }
+
+  /**
+   * Set the content resolver to use
+   */
+  setContentResolver(resolver: ContentResolver): void {
+    this.contentResolver = resolver;
   }
 
   /**

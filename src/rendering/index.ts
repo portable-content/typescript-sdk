@@ -19,3 +19,8 @@ export * from './base-renderers';
 
 // Capability detector
 export * from './capability-detector';
+
+// Content resolution
+export * from './content-resolution';
+export * from './strategies';
+export * from './resolver';
