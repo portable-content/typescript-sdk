@@ -4,7 +4,8 @@
 
 import {
   ContentManifestBuilder,
-  ElementBuilder
+  ElementBuilder,
+  PayloadSourceBuilder
 } from '../../../src/types/utils';
 import type { ContentManifest, Element, PayloadSource, ElementContent, Representation } from '../../../src/types/core';
 
@@ -284,5 +285,232 @@ describe('ElementBuilder', () => {
     expect(element.kind).toBe('markdown');
     expect(element.content?.primary).toEqual(content.primary);
     expect(element.content?.source).toEqual(source);
+  });
+
+  describe('error handling', () => {
+    it('should throw error when adding alternative without primary content', () => {
+      const alternative: PayloadSource = {
+        type: 'external',
+        mediaType: 'text/markdown',
+        uri: 'alt.md'
+      };
+
+      expect(() => {
+        new ElementBuilder('test-id', 'markdown')
+          .addAlternative(alternative)
+          .build();
+      }).toThrow('Must set primary content before alternatives');
+    });
+
+    it('should throw error when adding variant without primary content', () => {
+      const variant = {
+        id: 'variant-1',
+        name: 'Dark Theme',
+        payloadSource: { type: 'inline' as const, mediaType: 'text/markdown', source: 'Dark variant' }
+      };
+
+      expect(() => {
+        new ElementBuilder('test-id', 'markdown')
+          .addVariant(variant)
+          .build();
+      }).toThrow('Must set primary content before variants');
+    });
+
+    it('should throw error when adding transform without primary content', () => {
+      const transform = {
+        id: 'transform-1',
+        type: 'style' as const,
+        config: { color: 'blue' }
+      };
+
+      expect(() => {
+        new ElementBuilder('test-id', 'markdown')
+          .addTransform(transform)
+          .build();
+      }).toThrow('Must set primary content before transforms');
+    });
+
+    it('should throw error when building without primary content', () => {
+      expect(() => {
+        new ElementBuilder('test-id', 'markdown')
+          .build();
+      }).toThrow('Element must have primary content');
+    });
+  });
+
+  describe('builder methods', () => {
+    it('should add alternatives correctly', () => {
+      const primary: PayloadSource = {
+        type: 'inline',
+        mediaType: 'text/markdown',
+        source: 'Primary content'
+      };
+      const alternative: PayloadSource = {
+        type: 'external',
+        mediaType: 'text/markdown',
+        uri: 'alt.md'
+      };
+
+      const element = new ElementBuilder('test-id', 'markdown')
+        .content({ primary })
+        .addAlternative(alternative)
+        .build();
+
+      expect(element.content?.alternatives).toHaveLength(1);
+      expect(element.content?.alternatives?.[0]).toEqual(alternative);
+    });
+
+    it('should add variants correctly', () => {
+      const primary: PayloadSource = {
+        type: 'inline',
+        mediaType: 'text/markdown',
+        source: 'Primary content'
+      };
+      const variant = {
+        id: 'variant-1',
+        name: 'Dark Theme',
+        payloadSource: { type: 'inline' as const, mediaType: 'text/markdown', source: 'Dark variant' }
+      };
+
+      const element = new ElementBuilder('test-id', 'markdown')
+        .content({ primary })
+        .addVariant(variant)
+        .build();
+
+      expect(element.content?.variants).toHaveLength(1);
+      expect(element.content?.variants?.[0]).toEqual(variant);
+    });
+
+    it('should add transforms correctly', () => {
+      const primary: PayloadSource = {
+        type: 'inline',
+        mediaType: 'text/markdown',
+        source: 'Primary content'
+      };
+      const transform = {
+        id: 'transform-1',
+        type: 'style' as const,
+        config: { color: 'blue' }
+      };
+
+      const element = new ElementBuilder('test-id', 'markdown')
+        .content({ primary })
+        .addTransform(transform)
+        .build();
+
+      expect(element.content?.transforms).toHaveLength(1);
+      expect(element.content?.transforms?.[0]).toEqual(transform);
+    });
+
+    it('should set eventId correctly', () => {
+      const primary: PayloadSource = {
+        type: 'inline',
+        mediaType: 'text/markdown',
+        source: 'Primary content'
+      };
+
+      const element = new ElementBuilder('test-id', 'markdown')
+        .content({ primary })
+        .eventId('event-123')
+        .build();
+
+      expect(element.eventId).toBe('event-123');
+    });
+
+    it('should set metadata correctly', () => {
+      const primary: PayloadSource = {
+        type: 'inline',
+        mediaType: 'text/markdown',
+        source: 'Primary content'
+      };
+      const metadata = {
+        title: 'Test Element',
+        description: 'A test element',
+        tags: ['test']
+      };
+
+      const element = new ElementBuilder('test-id', 'markdown')
+        .content({ primary })
+        .metadata(metadata)
+        .build();
+
+      expect(element.metadata).toEqual(expect.objectContaining(metadata));
+    });
+  });
+});
+
+describe('PayloadSourceBuilder', () => {
+  describe('inline payload sources', () => {
+    it('should create inline payload source', () => {
+      const payload = PayloadSourceBuilder.inline('text/markdown')
+        .source('Test content')
+        .build();
+
+      expect(payload.type).toBe('inline');
+      expect(payload.mediaType).toBe('text/markdown');
+      expect(payload.source).toBe('Test content');
+    });
+
+    it('should throw error when setting URI on inline payload', () => {
+      expect(() => {
+        PayloadSourceBuilder.inline('text/markdown')
+          .uri('http://example.com')
+          .build();
+      }).toThrow('URI can only be set for external payload sources');
+    });
+
+    it('should throw error when building inline payload without source', () => {
+      expect(() => {
+        PayloadSourceBuilder.inline('text/markdown')
+          .build();
+      }).toThrow('Inline payload source must have source content');
+    });
+
+    it('should set dimensions on inline payload', () => {
+      const payload = PayloadSourceBuilder.inline('image/png')
+        .source('base64data')
+        .dimensions(800, 600)
+        .build();
+
+      expect(payload.width).toBe(800);
+      expect(payload.height).toBe(600);
+    });
+  });
+
+  describe('external payload sources', () => {
+    it('should create external payload source', () => {
+      const payload = PayloadSourceBuilder.external('text/markdown')
+        .uri('http://example.com/content.md')
+        .build();
+
+      expect(payload.type).toBe('external');
+      expect(payload.mediaType).toBe('text/markdown');
+      expect(payload.uri).toBe('http://example.com/content.md');
+    });
+
+    it('should throw error when setting source on external payload', () => {
+      expect(() => {
+        PayloadSourceBuilder.external('text/markdown')
+          .source('content')
+          .build();
+      }).toThrow('Source can only be set for inline payload sources');
+    });
+
+    it('should throw error when building external payload without URI', () => {
+      expect(() => {
+        PayloadSourceBuilder.external('text/markdown')
+          .build();
+      }).toThrow('External payload source must have URI');
+    });
+
+    it('should set dimensions on external payload', () => {
+      const payload = PayloadSourceBuilder.external('image/png')
+        .uri('http://example.com/image.png')
+        .dimensions(1920, 1080)
+        .build();
+
+      expect(payload.width).toBe(1920);
+      expect(payload.height).toBe(1080);
+    });
   });
 });
