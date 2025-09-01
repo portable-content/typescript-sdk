@@ -124,7 +124,8 @@ This SDK is designed with a modular, framework-agnostic architecture:
 
 - **🔧 Core Infrastructure**:
   - **Types**: Comprehensive TypeScript definitions
-  - **Client**: Base API client with transport abstraction
+  - **Transport**: Abstract transport layer for real-time communication
+  - **Events**: Event-driven architecture with lifecycle management
   - **Validation**: Runtime data validation with Zod
   - **Utils**: Common utility functions
 
