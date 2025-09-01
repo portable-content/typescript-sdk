@@ -397,13 +397,56 @@ describe('EventManager', () => {
     });
   });
 
+  describe('destroyed state error handling', () => {
+    let destroyedManager: EventManager;
+
+    beforeEach(() => {
+      destroyedManager = new EventManager(createTestEventManagerOptions());
+      destroyedManager.destroy();
+    });
+
+    it('should throw error when registering element after destruction', () => {
+      expect(() => destroyedManager.registerElement(testElement))
+        .toThrow('EventManager has been destroyed');
+    });
+
+    it('should throw error when unregistering element after destruction', () => {
+      expect(() => destroyedManager.unregisterElement(testElement.id))
+        .toThrow('EventManager has been destroyed');
+    });
+
+    it('should throw error when sending event after destruction', async () => {
+      const event = createTestElementEvent();
+      await expect(destroyedManager.sendEvent(event))
+        .rejects.toThrow('EventManager has been destroyed');
+    });
+
+    it('should throw error when sending batch events after destruction', async () => {
+      const events = [createTestElementEvent()];
+      await expect(destroyedManager.sendBatchEvents(events))
+        .rejects.toThrow('EventManager has been destroyed');
+    });
+
+    it('should throw error when subscribing after destruction', () => {
+      const callback = jest.fn();
+      expect(() => destroyedManager.subscribe(testElement.id, callback))
+        .toThrow('EventManager has been destroyed');
+    });
+
+    it('should throw error when subscribing to all events after destruction', () => {
+      const callback = jest.fn();
+      expect(() => destroyedManager.subscribeToAll(callback))
+        .toThrow('EventManager has been destroyed');
+    });
+  });
+
   describe('destruction', () => {
     it('should destroy properly', async () => {
       eventManager.registerElement(testElement);
       expect(eventManager.getRegisteredElements()).toHaveLength(1);
 
       eventManager.destroy();
-      
+
       expect(() => eventManager.registerElement(testElement)).toThrow();
       await expect(eventManager.sendEvent({} as any)).rejects.toThrow();
       expect(() => eventManager.subscribe('test', () => {})).toThrow();

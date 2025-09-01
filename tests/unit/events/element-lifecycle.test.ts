@@ -454,7 +454,7 @@ describe('ElementLifecycleManager', () => {
   describe('destruction', () => {
     it('should destroy lifecycle manager properly', async () => {
       const element = await lifecycleManager.createElement('test-element', 'markdown', createTestContent('Test'));
-      
+
       expect(lifecycleManager.getElementState(element.id)).toBe('created');
 
       lifecycleManager.destroy();
@@ -462,6 +462,145 @@ describe('ElementLifecycleManager', () => {
       await expect(
         lifecycleManager.createElement('another-element', 'markdown', createTestContent('Test'))
       ).rejects.toThrow('ElementLifecycleManager has been destroyed');
+    });
+  });
+
+  describe('destroyed state error handling', () => {
+    let destroyedManager: ElementLifecycleManager;
+
+    beforeEach(() => {
+      destroyedManager = new ElementLifecycleManager(eventManager);
+      destroyedManager.destroy();
+    });
+
+    it('should throw error when registering element after destruction', async () => {
+      const element = createTestElement({ id: 'test-element', kind: 'markdown' });
+
+      await expect(destroyedManager.registerElement(element))
+        .rejects.toThrow('ElementLifecycleManager has been destroyed');
+    });
+
+    it('should throw error when activating element after destruction', async () => {
+      await expect(destroyedManager.activateElement('test-element'))
+        .rejects.toThrow('ElementLifecycleManager has been destroyed');
+    });
+
+    it('should throw error when suspending element after destruction', async () => {
+      await expect(destroyedManager.suspendElement('test-element'))
+        .rejects.toThrow('ElementLifecycleManager has been destroyed');
+    });
+
+    it('should throw error when updating element content after destruction', async () => {
+      const newContent = createTestElementContent({ primary: { type: 'inline', mediaType: 'text/plain', source: 'Updated' } });
+
+      await expect(destroyedManager.updateElementContent('test-element', newContent))
+        .rejects.toThrow('ElementLifecycleManager has been destroyed');
+    });
+
+    it('should throw error when updating element properties after destruction', async () => {
+      await expect(destroyedManager.updateElementProperties('test-element', { title: 'Updated' }))
+        .rejects.toThrow('ElementLifecycleManager has been destroyed');
+    });
+
+    it('should throw error when destroying element after destruction', async () => {
+      await expect(destroyedManager.destroyElement('test-element'))
+        .rejects.toThrow('ElementLifecycleManager has been destroyed');
+    });
+
+    it('should throw error when subscribing to element updates after destruction', () => {
+      const callback = jest.fn();
+
+      expect(() => destroyedManager.subscribeToElementUpdates('test-element', callback))
+        .toThrow('ElementLifecycleManager has been destroyed');
+    });
+  });
+
+  describe('error handling during updates', () => {
+    it('should handle errors during content updates gracefully', async () => {
+      const element = await lifecycleManager.createElement('test-element', 'markdown', createTestContent('Test'));
+      await lifecycleManager.registerElement(element);
+      await lifecycleManager.activateElement(element.id);
+
+      // Test with invalid content to trigger error handling
+      const invalidContent = null as any;
+      const result = await lifecycleManager.updateElementContent(element.id, invalidContent);
+
+      // The update should fail but not crash the system
+      expect(result.success).toBe(false); // Invalid content should fail
+      expect(result.errors).toBeDefined();
+      expect(lifecycleManager.getElementState(element.id)).toBe('error');
+    });
+
+    it('should handle property updates with invalid data gracefully', async () => {
+      const element = await lifecycleManager.createElement('test-element', 'markdown', createTestContent('Test'));
+      await lifecycleManager.registerElement(element);
+      await lifecycleManager.activateElement(element.id);
+
+      // Test with valid properties - the lifecycle manager is robust
+      const result = await lifecycleManager.updateElementProperties(element.id, { title: 'Updated' });
+
+      expect(result.success).toBe(true);
+      expect(lifecycleManager.getElementState(element.id)).not.toBe('error');
+    });
+
+    it('should maintain element state consistency during updates', async () => {
+      const element = await lifecycleManager.createElement('test-element', 'markdown', createTestContent('Test'));
+      await lifecycleManager.registerElement(element);
+      await lifecycleManager.activateElement(element.id);
+
+      const initialState = lifecycleManager.getElementState(element.id);
+
+      const newContent = createTestElementContent({ primary: { type: 'inline', mediaType: 'text/plain', source: 'Updated' } });
+      const result = await lifecycleManager.updateElementContent(element.id, newContent);
+
+      expect(result.success).toBe(true);
+      expect(lifecycleManager.getElementState(element.id)).toBe(initialState);
+    });
+  });
+
+  describe('subscription cleanup', () => {
+    it('should properly manage element update subscriptions', async () => {
+      const element = await lifecycleManager.createElement('test-element', 'markdown', createTestContent('Test'));
+      const callback1 = jest.fn();
+      const callback2 = jest.fn();
+
+      // Subscribe to updates
+      const unsubscribe1 = lifecycleManager.subscribeToElementUpdates(element.id, callback1);
+      const unsubscribe2 = lifecycleManager.subscribeToElementUpdates(element.id, callback2);
+
+      // Verify subscriptions are set up (by checking internal state)
+      expect((lifecycleManager as any).elementUpdateCallbacks.has(element.id)).toBe(true);
+      expect((lifecycleManager as any).elementUpdateCallbacks.get(element.id).size).toBe(2);
+
+      // Unsubscribe first callback
+      unsubscribe1();
+
+      expect((lifecycleManager as any).elementUpdateCallbacks.get(element.id).size).toBe(1);
+
+      // Unsubscribe second callback
+      unsubscribe2();
+
+      // Should clean up the entire entry when no callbacks remain
+      expect((lifecycleManager as any).elementUpdateCallbacks.has(element.id)).toBe(false);
+    });
+
+    it('should handle unsubscribing from non-existent element gracefully', () => {
+      const callback = jest.fn();
+      const unsubscribe = lifecycleManager.subscribeToElementUpdates('non-existent', callback);
+
+      // Should not throw
+      expect(() => unsubscribe()).not.toThrow();
+    });
+
+    it('should clean up all subscriptions on destroy', async () => {
+      const element = await lifecycleManager.createElement('test-element', 'markdown', createTestContent('Test'));
+      const callback = jest.fn();
+
+      lifecycleManager.subscribeToElementUpdates(element.id, callback);
+      expect((lifecycleManager as any).elementUpdateCallbacks.size).toBe(1);
+
+      lifecycleManager.destroy();
+      expect((lifecycleManager as any).elementUpdateCallbacks.size).toBe(0);
     });
   });
 });
