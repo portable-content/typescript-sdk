@@ -10,9 +10,6 @@
 // Core types and interfaces
 export * from './types';
 
-// API client and transport
-export * from './client';
-
 // Rendering utilities
 export * from './rendering';
 
