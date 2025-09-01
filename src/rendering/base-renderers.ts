@@ -5,7 +5,7 @@
  * by framework-specific implementations.
  */
 
-import type { Block, PayloadSource } from '../types';
+import type { Element, PayloadSource } from '../types';
 import type { BlockRenderer, RenderContext, RenderResult } from './interfaces';
 import type { ContentResolver, RenderingContent } from './content-resolution';
 import { PayloadSourceSelector } from './variant-selector';
@@ -24,17 +24,17 @@ export abstract class BaseBlockRenderer<TProps = unknown, TResult = unknown>
   abstract readonly priority: number;
 
   /**
-   * Default implementation checks if block kind matches
+   * Default implementation checks if element kind matches
    */
-  canRender(block: Block, context: RenderContext): boolean {
-    return block.kind === this.kind && this.hasRenderablePayloadSource(block, context);
+  canRender(element: Element, context: RenderContext): boolean {
+    return element.kind === this.kind && this.hasRenderablePayloadSource(element, context);
   }
 
   /**
    * Abstract render method to be implemented by subclasses
    */
   abstract render(
-    block: Block,
+    element: Element,
     props: TProps,
     context: RenderContext
   ): Promise<RenderResult<TResult>>;
@@ -56,15 +56,18 @@ export abstract class BaseBlockRenderer<TProps = unknown, TResult = unknown>
   /**
    * Select best payload source for rendering
    */
-  protected selectPayloadSource(block: Block, context: RenderContext): PayloadSource | null {
-    return this.payloadSourceSelector.selectBestPayloadSource(block, context.capabilities);
+  protected selectPayloadSource(element: Element, context: RenderContext): PayloadSource | null {
+    return this.payloadSourceSelector.selectBestPayloadSource(element, context.capabilities);
   }
 
   /**
    * Resolve content for rendering from the best payload source
    */
-  protected async resolveRenderingContent(block: Block, context: RenderContext): Promise<RenderingContent> {
-    return this.contentResolver.resolveBlockContent(block, context.capabilities);
+  protected async resolveRenderingContent(
+    element: Element,
+    context: RenderContext
+  ): Promise<RenderingContent> {
+    return this.contentResolver.resolveElementContent(element, context.capabilities);
   }
 
   /**
@@ -75,10 +78,10 @@ export abstract class BaseBlockRenderer<TProps = unknown, TResult = unknown>
   }
 
   /**
-   * Check if block has at least one renderable payload source
+   * Check if element has at least one renderable payload source
    */
-  protected hasRenderablePayloadSource(block: Block, context: RenderContext): boolean {
-    return this.selectPayloadSource(block, context) !== null;
+  protected hasRenderablePayloadSource(element: Element, context: RenderContext): boolean {
+    return this.selectPayloadSource(element, context) !== null;
   }
 
   /**

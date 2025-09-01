@@ -5,7 +5,7 @@
  * based on client capabilities and preferences.
  */
 
-import type { PayloadSource, Capabilities, CapabilityHints, Block } from '../types';
+import type { PayloadSource, Capabilities, CapabilityHints, Element } from '../types';
 
 export interface PayloadSourceScore {
   payloadSource: PayloadSource;
@@ -18,12 +18,12 @@ export interface PayloadSourceScore {
  */
 export class PayloadSourceSelector {
   /**
-   * Select the best payload source for a block based on capabilities
+   * Select the best payload source for an element based on capabilities
    */
-  selectBestPayloadSource(block: Block, capabilities: Capabilities): PayloadSource | null {
+  selectBestPayloadSource(element: Element, capabilities: Capabilities): PayloadSource | null {
     // Start with primary content
-    const primary = block.content.primary;
-    const alternatives = block.content.alternatives || [];
+    const primary = element.content.primary;
+    const alternatives = element.content.alternatives || [];
 
     // Combine all available sources
     const allSources = [primary, ...alternatives];

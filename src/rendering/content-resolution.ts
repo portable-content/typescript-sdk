@@ -2,38 +2,38 @@
  * @fileoverview Content resolution interfaces and types for normalizing content for rendering
  */
 
-import type { Block, PayloadSource, Capabilities, ExternalPayloadSource } from '../types';
+import type { Element, PayloadSource, Capabilities, ExternalPayloadSource } from '../types';
 
 /**
- * Normalized content ready for rendering by block components
+ * Normalized content ready for rendering by element components
  */
 export interface RenderingContent {
   /** The actual content data (text, binary data, etc.) */
   data: string | ArrayBuffer | Blob;
-  
+
   /** Media type of the content */
   mediaType: string;
-  
+
   /** Original payload source that was resolved */
   source: PayloadSource;
-  
+
   /** Additional metadata about the content */
   metadata?: {
     /** Size of the content in bytes */
     size?: number;
-    
+
     /** Content hash for caching/validation */
     hash?: string;
-    
+
     /** When the content was loaded */
     loadedAt?: Date;
-    
+
     /** Loading duration in milliseconds */
     loadDuration?: number;
-    
+
     /** Whether content was loaded from cache */
     fromCache?: boolean;
-    
+
     /** Any additional metadata from the source */
     [key: string]: unknown;
   };
@@ -45,16 +45,16 @@ export interface RenderingContent {
 export interface ContentResolutionError {
   /** Error message */
   message: string;
-  
+
   /** Error code for programmatic handling */
   code: string;
-  
+
   /** The payload source that failed to resolve */
   source: PayloadSource;
-  
+
   /** Original error if available */
   cause?: Error;
-  
+
   /** When the error occurred */
   timestamp: Date;
 }
@@ -62,7 +62,7 @@ export interface ContentResolutionError {
 /**
  * Result of content resolution - either success or error
  */
-export type ContentResolutionResult = 
+export type ContentResolutionResult =
   | { success: true; content: RenderingContent }
   | { success: false; error: ContentResolutionError };
 
@@ -72,7 +72,7 @@ export type ContentResolutionResult =
 export interface LoadingStrategy {
   /** Name of the strategy for debugging/logging */
   readonly name: string;
-  
+
   /**
    * Resolve a payload source to rendering content
    * @param source The payload source to resolve
@@ -80,8 +80,12 @@ export interface LoadingStrategy {
    * @param options Resolution options
    * @returns Promise resolving to the content or error
    */
-  resolve(source: PayloadSource, capabilities: Capabilities, options?: ContentResolutionOptions): Promise<ContentResolutionResult>;
-  
+  resolve(
+    source: PayloadSource,
+    capabilities: Capabilities,
+    options?: ContentResolutionOptions
+  ): Promise<ContentResolutionResult>;
+
   /**
    * Check if this strategy can handle the given payload source
    * @param source The payload source to check
@@ -96,16 +100,16 @@ export interface LoadingStrategy {
 export interface ContentResolutionOptions {
   /** Timeout for external content loading in milliseconds */
   timeout?: number;
-  
+
   /** Whether to use caching */
   useCache?: boolean;
-  
+
   /** Custom headers for external requests */
   headers?: Record<string, string>;
-  
+
   /** Whether to validate content integrity */
   validateIntegrity?: boolean;
-  
+
   /** Maximum content size to accept in bytes */
   maxSize?: number;
 }
@@ -115,18 +119,18 @@ export interface ContentResolutionOptions {
  */
 export interface ContentResolver {
   /**
-   * Resolve content for a block using the best available payload source
-   * @param block The block to resolve content for
+   * Resolve content for an element using the best available payload source
+   * @param element The element to resolve content for
    * @param capabilities Client capabilities
    * @param options Resolution options
    * @returns Promise resolving to rendering content
    */
-  resolveBlockContent(
-    block: Block, 
-    capabilities: Capabilities, 
+  resolveElementContent(
+    element: Element,
+    capabilities: Capabilities,
     options?: ContentResolutionOptions
   ): Promise<RenderingContent>;
-  
+
   /**
    * Resolve a specific payload source to rendering content
    * @param source The payload source to resolve
@@ -135,17 +139,17 @@ export interface ContentResolver {
    * @returns Promise resolving to rendering content
    */
   resolvePayloadSource(
-    source: PayloadSource, 
-    capabilities: Capabilities, 
+    source: PayloadSource,
+    capabilities: Capabilities,
     options?: ContentResolutionOptions
   ): Promise<RenderingContent>;
-  
+
   /**
    * Set the loading strategy to use
    * @param strategy The loading strategy
    */
   setLoadingStrategy(strategy: LoadingStrategy): void;
-  
+
   /**
    * Get the current loading strategy
    * @returns The current loading strategy
@@ -163,7 +167,7 @@ export interface ContentCache {
    * @returns Cached content or null if not found
    */
   get(key: string): Promise<RenderingContent | null>;
-  
+
   /**
    * Set cached content
    * @param key Cache key
@@ -171,14 +175,14 @@ export interface ContentCache {
    * @param ttl Time to live in milliseconds
    */
   set(key: string, content: RenderingContent, ttl?: number): Promise<void>;
-  
+
   /**
    * Check if content exists in cache
    * @param key Cache key
    * @returns True if content is cached
    */
   has(key: string): Promise<boolean>;
-  
+
   /**
    * Clear cached content
    * @param key Cache key or pattern
@@ -212,7 +216,7 @@ function hashString(str: string): string {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
   return Math.abs(hash).toString(36);

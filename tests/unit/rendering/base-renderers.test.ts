@@ -3,15 +3,15 @@
  */
 
 import { BaseBlockRenderer, BaseTextRenderer, BaseImageRenderer } from '../../../src/rendering/base-renderers';
-import type { Block, PayloadSource, Capabilities } from '../../../src/types';
+import type { Element, PayloadSource, Capabilities } from '../../../src/types';
 import type { RenderContext, RenderResult } from '../../../src/rendering/interfaces';
 
 // Mock implementation of BaseBlockRenderer for testing
 class TestBlockRenderer extends BaseBlockRenderer<{ text: string }, string> {
-  readonly kind = 'test';
+  readonly kind = 'markdown';
   readonly priority = 1;
 
-  async render(block: Block, props: { text: string }, context: RenderContext): Promise<RenderResult<string>> {
+  async render(block: Element, props: { text: string }, context: RenderContext): Promise<RenderResult<string>> {
     const payloadSource = this.selectPayloadSource(block, context);
     return {
       content: `Rendered: ${props.text}`,
@@ -25,7 +25,7 @@ class TestTextRenderer extends BaseTextRenderer<{ style: string }, string> {
   readonly kind = 'markdown';
   readonly priority = 1;
 
-  async render(block: Block, props: { style: string }, context: RenderContext): Promise<RenderResult<string>> {
+  async render(block: Element, props: { style: string }, context: RenderContext): Promise<RenderResult<string>> {
     const payloadSource = this.selectPayloadSource(block, context);
     if (!payloadSource) {
       return { content: 'No payload source', payloadSource: null };
@@ -53,7 +53,7 @@ class TestImageRenderer extends BaseImageRenderer<{ alt: string }, { src: string
   readonly kind = 'image';
   readonly priority = 1;
 
-  async render(block: Block, props: { alt: string }, context: RenderContext): Promise<RenderResult<{ src: string; alt: string }>> {
+  async render(block: Element, props: { alt: string }, context: RenderContext): Promise<RenderResult<{ src: string; alt: string }>> {
     const payloadSource = this.selectPayloadSource(block, context);
     if (!payloadSource || !this.isImagePayloadSource(payloadSource)) {
       return { content: { src: '', alt: props.alt }, payloadSource: null };
@@ -79,17 +79,17 @@ describe('BaseBlockRenderer', () => {
   beforeEach(() => {
     renderer = new TestBlockRenderer();
     mockContext = {
-      capabilities: { accept: ['text/plain'] }
+      capabilities: { accept: ['text/markdown', 'text/plain'] }
     };
   });
 
   describe('canRender', () => {
     it('should return true for matching block kind with renderable payload source', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test',
-        kind: 'test',
+        kind: 'markdown',
         content: {
-          primary: { type: 'external', mediaType: 'text/plain', uri: 'test.txt' }
+          primary: { type: 'external', mediaType: 'text/markdown', uri: 'test.md' }
         }
       };
 
@@ -97,9 +97,9 @@ describe('BaseBlockRenderer', () => {
     });
 
     it('should return false for non-matching block kind', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test',
-        kind: 'other',
+        kind: 'document',
         content: {
           primary: { type: 'external', mediaType: 'text/plain', uri: 'test.txt' }
         }
@@ -109,9 +109,9 @@ describe('BaseBlockRenderer', () => {
     });
 
     it('should return false when no renderable payload sources exist', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test',
-        kind: 'test',
+        kind: 'markdown',
         content: {
           primary: { type: 'external', mediaType: 'application/unknown', uri: 'test.bin' }
         }
@@ -136,9 +136,9 @@ describe('BaseBlockRenderer', () => {
 
   describe('selectPayloadSource', () => {
     it('should select best payload source based on capabilities', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test',
-        kind: 'test',
+        kind: 'markdown',
         content: {
           primary: { type: 'external', mediaType: 'text/html', uri: 'test.html' },
           alternatives: [
@@ -168,7 +168,7 @@ describe('BaseBlockRenderer', () => {
 
       renderer['handleError'](error, mockContext);
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Rendering error in test renderer:'),
+        expect.stringContaining('Rendering error in markdown renderer:'),
         error
       );
 

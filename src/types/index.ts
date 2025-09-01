@@ -1,12 +1,16 @@
 /**
  * @fileoverview Type definitions for the Portable Content System
+ * Updated for Element-based architecture with event system support
  */
 
 // Core types
 export type {
   ContentManifest,
-  Block,
-  BlockContent,
+  Element,
+  ElementContent,
+  ElementMetadata,
+  ElementVariant,
+  TransformConfig,
   PayloadSource,
   InlinePayloadSource,
   ExternalPayloadSource,
@@ -15,30 +19,53 @@ export type {
   Representation,
 } from './core';
 
-// Block-specific types
+// Element-specific types
 export type {
-  MarkdownBlock,
-  MermaidBlock,
-  ImageBlock,
-  DocumentBlock,
-  CodeBlock,
-  BlockTypeMap,
-  TypedBlock,
-} from './blocks';
+  MarkdownElement,
+  MermaidElement,
+  ImageElement,
+  DocumentElement,
+  VideoElement,
+  ElementTypeMap,
+  TypedElement,
+} from './elements';
 
-// Block type guards and utilities
+// Element type guards and utilities
 export {
-  isMarkdownBlock,
-  isMermaidBlock,
-  isImageBlock,
-  isDocumentBlock,
-  isCodeBlock,
+  isMarkdownElement,
+  isMermaidElement,
+  isImageElement,
+  isDocumentElement,
+  isVideoElement,
   getTypedContent,
   getPrimaryContent,
   getSourceContent,
   getAlternativeContent,
   getBestAlternative,
-} from './blocks';
+  getElementVariants,
+  getVariantById,
+  getTransformConfigs,
+} from './elements';
+
+// Event system types
+export type {
+  ElementEvent,
+  ElementEventType,
+  ElementEventData,
+  ElementEventMetadata,
+  ElementEventResult,
+  BatchElementEventResult,
+  ElementUpdateFunction,
+  ElementEventHistoryEntry,
+  ElementEventSubscriber,
+  ElementEventCallback,
+  BatchElementEventCallback,
+  UnsubscribeFunction,
+  EventQueueOptions,
+  EventManagerOptions,
+} from './events';
+
+export { DEFAULT_EVENT_QUEUE_OPTIONS, DEFAULT_EVENT_MANAGER_OPTIONS } from './events';
 
 // Capability types
 export type { Capabilities, CapabilityHints, NetworkType } from './capabilities';
@@ -58,6 +85,10 @@ export type {
 export { defaultTheme, darkTheme } from './styling';
 
 // Utility types and builders
-export type { ContentForKind, ContentForUnknownKind, PartialContentManifest } from './utils';
+export type {
+  ContentForElementKind,
+  ContentForUnknownElementKind,
+  PartialContentManifest,
+} from './utils';
 
-export { ContentManifestBuilder, BlockBuilder, PayloadSourceBuilder } from './utils';
+export { ContentManifestBuilder, ElementBuilder, PayloadSourceBuilder } from './utils';

@@ -5,19 +5,19 @@
  * and dispatching rendering to the appropriate renderer.
  */
 
-import type { Block } from '../types';
-import type { BlockRenderer, RendererRegistry, RenderContext } from './interfaces';
+import type { Element } from '../types';
+import type { ElementRenderer, RendererRegistry, RenderContext } from './interfaces';
 
 /**
  * Default implementation of renderer registry
  */
 export class DefaultRendererRegistry implements RendererRegistry {
-  private renderers = new Map<string, BlockRenderer[]>();
+  private renderers = new Map<string, ElementRenderer[]>();
 
   /**
-   * Register a renderer for a block kind
+   * Register a renderer for an element kind
    */
-  register<TProps, TResult>(renderer: BlockRenderer<TProps, TResult>): void {
+  register<TProps, TResult>(renderer: ElementRenderer<TProps, TResult>): void {
     const existing = this.renderers.get(renderer.kind) || [];
 
     // Insert in priority order (highest first)
@@ -53,15 +53,15 @@ export class DefaultRendererRegistry implements RendererRegistry {
   }
 
   /**
-   * Get the best renderer for a block
+   * Get the best renderer for an element
    */
-  getRenderer(block: Block, context: RenderContext): BlockRenderer | null {
-    const renderers = this.renderers.get(block.kind);
+  getRenderer(element: Element, context: RenderContext): ElementRenderer | null {
+    const renderers = this.renderers.get(element.kind);
     if (!renderers) return null;
 
-    // Find first renderer that can handle this block
+    // Find first renderer that can handle this element
     for (const renderer of renderers) {
-      if (renderer.canRender(block, context)) {
+      if (renderer.canRender(element, context)) {
         return renderer;
       }
     }
@@ -72,7 +72,7 @@ export class DefaultRendererRegistry implements RendererRegistry {
   /**
    * Get all renderers for a kind
    */
-  getRenderers(kind: string): BlockRenderer[] {
+  getRenderers(kind: string): ElementRenderer[] {
     return this.renderers.get(kind) || [];
   }
 

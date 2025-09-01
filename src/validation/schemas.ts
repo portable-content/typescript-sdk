@@ -34,21 +34,42 @@ export const PayloadSourceSchema = z
   );
 
 /**
- * Schema for BlockContent interface
+ * Schema for ElementContent interface
  */
-export const BlockContentSchema = z.object({
+export const ElementContentSchema = z.object({
   primary: PayloadSourceSchema,
   source: PayloadSourceSchema.optional(),
   alternatives: z.array(PayloadSourceSchema).optional(),
+  variants: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        payloadSource: PayloadSourceSchema,
+        metadata: z.record(z.unknown()).optional(),
+      })
+    )
+    .optional(),
+  transforms: z
+    .array(
+      z.object({
+        type: z.string(),
+        params: z.record(z.unknown()).optional(),
+        outputFormats: z.array(z.string()).optional(),
+      })
+    )
+    .optional(),
 });
 
 /**
- * Schema for Block interface
+ * Schema for Element interface
  */
-export const BlockSchema = z.object({
-  id: z.string().min(1, 'Block ID is required'),
-  kind: z.string().min(1, 'Block kind is required'),
-  content: BlockContentSchema,
+export const ElementSchema = z.object({
+  id: z.string().min(1, 'Element ID is required'),
+  kind: z.enum(['markdown', 'image', 'mermaid', 'video', 'document']),
+  content: ElementContentSchema,
+  eventId: z.string().optional(),
+  metadata: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -60,7 +81,7 @@ export const VariantSchema = PayloadSourceSchema;
  * Schema for Representation interface
  */
 export const RepresentationSchema = z.object({
-  blocks: z.array(z.string().min(1)).min(1, 'At least one block ID is required'),
+  elements: z.array(z.string().min(1)).min(1, 'At least one element ID is required'),
   metadata: z.record(z.unknown()).optional(),
 });
 
@@ -72,7 +93,7 @@ export const ContentManifestSchema = z.object({
   type: z.string().min(1, 'Content type is required'),
   title: z.string().optional(),
   summary: z.string().optional(),
-  blocks: z.array(BlockSchema).default([]),
+  elements: z.array(ElementSchema).default([]),
   representations: z.record(RepresentationSchema).optional(),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),

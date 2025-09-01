@@ -3,7 +3,7 @@
  */
 
 import { PayloadSourceSelector } from '../../../src/rendering/variant-selector';
-import type { Block, PayloadSource, Capabilities } from '../../../src/types';
+import type { Element, PayloadSource, Capabilities } from '../../../src/types';
 
 describe('PayloadSourceSelector', () => {
   let selector: PayloadSourceSelector;
@@ -14,7 +14,7 @@ describe('PayloadSourceSelector', () => {
 
   describe('selectBestPayloadSource', () => {
     it('should return primary source when no alternatives exist', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
         kind: 'image',
         content: {
@@ -28,7 +28,7 @@ describe('PayloadSourceSelector', () => {
     });
 
     it('should select WebP over JPEG when both are supported', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
         kind: 'image',
         content: {
@@ -48,9 +48,9 @@ describe('PayloadSourceSelector', () => {
     });
 
     it('should prefer inline content for small data', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
-        kind: 'text',
+        kind: 'markdown',
         content: {
           primary: { type: 'external', mediaType: 'text/plain', uri: 'large.txt' },
           alternatives: [
@@ -69,7 +69,7 @@ describe('PayloadSourceSelector', () => {
     });
 
     it('should handle quality values in accept headers', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
         kind: 'image',
         content: {
@@ -89,7 +89,7 @@ describe('PayloadSourceSelector', () => {
     });
 
     it('should match wildcard media types', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
         kind: 'image',
         content: {
@@ -109,7 +109,7 @@ describe('PayloadSourceSelector', () => {
     });
 
     it('should consider size preferences in hints', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
         kind: 'image',
         content: {
@@ -130,7 +130,7 @@ describe('PayloadSourceSelector', () => {
     });
 
     it('should return primary when no alternatives match capabilities', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
         kind: 'image',
         content: {
@@ -152,7 +152,7 @@ describe('PayloadSourceSelector', () => {
     });
 
     it('should handle density preferences', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
         kind: 'image',
         content: {
@@ -176,9 +176,9 @@ describe('PayloadSourceSelector', () => {
       const largeContent = 'x'.repeat(200000); // 200KB content
       const smallContent = 'small content';
 
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
-        kind: 'text',
+        kind: 'markdown',
         content: {
           primary: { type: 'inline', mediaType: 'text/plain', source: largeContent },
           alternatives: [
@@ -199,7 +199,7 @@ describe('PayloadSourceSelector', () => {
 
   describe('media type matching', () => {
     it('should match exact media types', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
         kind: 'image',
         content: {
@@ -216,9 +216,9 @@ describe('PayloadSourceSelector', () => {
     });
 
     it('should match wildcard patterns', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
-        kind: 'mixed',
+        kind: 'document',
         content: {
           primary: { type: 'external', mediaType: 'image/webp', uri: 'test.webp' },
           alternatives: [
@@ -237,9 +237,9 @@ describe('PayloadSourceSelector', () => {
     });
 
     it('should match catch-all pattern', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
-        kind: 'binary',
+        kind: 'document',
         content: {
           primary: { type: 'external', mediaType: 'application/octet-stream', uri: 'test.bin' }
         }
@@ -256,9 +256,9 @@ describe('PayloadSourceSelector', () => {
 
   describe('network optimization', () => {
     it('should prefer inline content on cellular networks', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
-        kind: 'text',
+        kind: 'markdown',
         content: {
           primary: { type: 'external', mediaType: 'text/plain', uri: 'large.txt' },
           alternatives: [
@@ -277,7 +277,7 @@ describe('PayloadSourceSelector', () => {
     });
 
     it('should not penalize external content on fast networks', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
         kind: 'image',
         content: {
@@ -301,9 +301,9 @@ describe('PayloadSourceSelector', () => {
 
   describe('edge cases', () => {
     it('should return primary when block has no alternatives', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
-        kind: 'text',
+        kind: 'markdown',
         content: {
           primary: { type: 'inline', mediaType: 'text/plain', source: 'content' }
         }
@@ -318,7 +318,7 @@ describe('PayloadSourceSelector', () => {
     });
 
     it('should handle blocks with only external sources', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
         kind: 'image',
         content: {
@@ -341,9 +341,9 @@ describe('PayloadSourceSelector', () => {
 
   describe('mediaTypeMatches edge cases', () => {
     it('should match catch-all media type', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
-        kind: 'custom',
+        kind: 'document',
         content: {
           primary: { type: 'external', mediaType: 'application/custom', uri: 'test.custom' }
         }
@@ -361,7 +361,7 @@ describe('PayloadSourceSelector', () => {
 
   describe('scoreForNetwork edge cases', () => {
     it('should handle unknown network types', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
         kind: 'image',
         content: {

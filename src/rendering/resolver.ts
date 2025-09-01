@@ -2,14 +2,14 @@
  * @fileoverview Default content resolver implementation
  */
 
-import type { 
-  ContentResolver, 
-  LoadingStrategy, 
+import type {
+  ContentResolver,
+  LoadingStrategy,
   RenderingContent,
   ContentResolutionOptions,
-  ContentCache
+  ContentCache,
 } from './content-resolution';
-import type { Block, PayloadSource, Capabilities } from '../types';
+import type { Element, PayloadSource, Capabilities } from '../types';
 import { PayloadSourceSelector } from './variant-selector';
 import { EagerLoadingStrategy } from './strategies';
 import { generateCacheKey } from './content-resolution';
@@ -22,40 +22,37 @@ export class DefaultContentResolver implements ContentResolver {
   private payloadSourceSelector: PayloadSourceSelector;
   private cache?: ContentCache;
 
-  constructor(
-    loadingStrategy?: LoadingStrategy,
-    cache?: ContentCache
-  ) {
+  constructor(loadingStrategy?: LoadingStrategy, cache?: ContentCache) {
     this.loadingStrategy = loadingStrategy || new EagerLoadingStrategy();
     this.payloadSourceSelector = new PayloadSourceSelector();
     this.cache = cache;
   }
 
-  async resolveBlockContent(
-    block: Block, 
-    capabilities: Capabilities, 
+  async resolveElementContent(
+    element: Element,
+    capabilities: Capabilities,
     options: ContentResolutionOptions = {}
   ): Promise<RenderingContent> {
-    // Select the best payload source for this block
-    const payloadSource = this.payloadSourceSelector.selectBestPayloadSource(block, capabilities);
-    
+    // Select the best payload source for this element
+    const payloadSource = this.payloadSourceSelector.selectBestPayloadSource(element, capabilities);
+
     if (!payloadSource) {
-      throw new Error(`No suitable payload source found for block ${block.id}`);
+      throw new Error(`No suitable payload source found for element ${element.id}`);
     }
 
     return this.resolvePayloadSource(payloadSource, capabilities, options);
   }
 
   async resolvePayloadSource(
-    source: PayloadSource, 
-    capabilities: Capabilities, 
+    source: PayloadSource,
+    capabilities: Capabilities,
     options: ContentResolutionOptions = {}
   ): Promise<RenderingContent> {
     // Check cache first if enabled
     if (options.useCache !== false && this.cache) {
       const cacheKey = generateCacheKey(source);
       const cached = await this.cache.get(cacheKey);
-      
+
       if (cached) {
         // Update metadata to indicate cache hit
         return {
@@ -63,20 +60,22 @@ export class DefaultContentResolver implements ContentResolver {
           metadata: {
             ...cached.metadata,
             fromCache: true,
-            loadedAt: new Date()
-          }
+            loadedAt: new Date(),
+          },
         };
       }
     }
 
     // Check if the current strategy can handle this source
     if (!this.loadingStrategy.canHandle(source)) {
-      throw new Error(`Loading strategy '${this.loadingStrategy.name}' cannot handle payload source type '${source.type}'`);
+      throw new Error(
+        `Loading strategy '${this.loadingStrategy.name}' cannot handle payload source type '${source.type}'`
+      );
     }
 
     // Resolve using the loading strategy
     const result = await this.loadingStrategy.resolve(source, capabilities, options);
-    
+
     if (!result.success) {
       const error = new Error(`Content resolution failed: ${result.error.message}`);
       (error as any).cause = result.error.cause;
@@ -119,7 +118,10 @@ export class DefaultContentResolver implements ContentResolver {
     return this.cache;
   }
 
-  private calculateCacheTTL(source: PayloadSource, options: ContentResolutionOptions): number | undefined {
+  private calculateCacheTTL(
+    source: PayloadSource,
+    _options: ContentResolutionOptions
+  ): number | undefined {
     // Default TTL based on content type
     if (source.type === 'inline') {
       // Inline content can be cached longer since it doesn't change
@@ -139,7 +141,7 @@ export class MemoryContentCache implements ContentCache {
 
   async get(key: string): Promise<RenderingContent | null> {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return null;
     }
@@ -160,7 +162,7 @@ export class MemoryContentCache implements ContentCache {
 
   async has(key: string): Promise<boolean> {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return false;
     }
@@ -189,7 +191,7 @@ export class MemoryContentCache implements ContentCache {
   getStats(): { size: number; keys: string[] } {
     return {
       size: this.cache.size,
-      keys: Array.from(this.cache.keys())
+      keys: Array.from(this.cache.keys()),
     };
   }
 

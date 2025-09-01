@@ -5,7 +5,7 @@
 import { EagerLoadingStrategy } from '../../../src/rendering/strategies';
 import { DefaultContentResolver, MemoryContentCache } from '../../../src/rendering/resolver';
 import { generateCacheKey } from '../../../src/rendering/content-resolution';
-import type { PayloadSource, Block, Capabilities, ExternalPayloadSource } from '../../../src/types';
+import type { PayloadSource, Element, Capabilities, ExternalPayloadSource } from '../../../src/types';
 
 // Mock fetch for testing external content
 global.fetch = jest.fn();
@@ -155,16 +155,16 @@ describe('EagerLoadingStrategy', () => {
 describe('DefaultContentResolver', () => {
   let resolver: DefaultContentResolver;
   let cache: MemoryContentCache;
-  let mockBlock: Block;
+  let mockElement: Element;
   let mockCapabilities: Capabilities;
 
   beforeEach(() => {
     cache = new MemoryContentCache();
     resolver = new DefaultContentResolver(undefined, cache);
-    
-    mockBlock = {
-      id: 'test-block',
-      kind: 'text',
+
+    mockElement = {
+      id: 'test-element',
+      kind: 'markdown',
       content: {
         primary: {
           type: 'inline',
@@ -179,9 +179,9 @@ describe('DefaultContentResolver', () => {
     };
   });
 
-  describe('resolveBlockContent', () => {
+  describe('resolveElementContent', () => {
     it('should resolve block content successfully', async () => {
-      const content = await resolver.resolveBlockContent(mockBlock, mockCapabilities);
+      const content = await resolver.resolveElementContent(mockElement, mockCapabilities);
 
       expect(content.data).toBe('Test content');
       expect(content.mediaType).toBe('text/plain');
@@ -189,9 +189,9 @@ describe('DefaultContentResolver', () => {
     });
 
     it('should throw error when no suitable payload source found', async () => {
-      const blockWithNoSources: Block = {
+      const blockWithNoSources: Element = {
         id: 'empty-block',
-        kind: 'text',
+        kind: 'document',
         content: {
           primary: {
             type: 'external',
@@ -206,7 +206,7 @@ describe('DefaultContentResolver', () => {
       };
 
       await expect(
-        resolver.resolveBlockContent(blockWithNoSources, capabilities)
+        resolver.resolveElementContent(blockWithNoSources, capabilities)
       ).rejects.toThrow('No suitable payload source found');
     });
   });
@@ -214,25 +214,25 @@ describe('DefaultContentResolver', () => {
   describe('caching', () => {
     it('should cache resolved content', async () => {
       // First resolution
-      const content1 = await resolver.resolveBlockContent(mockBlock, mockCapabilities);
+      const content1 = await resolver.resolveElementContent(mockElement, mockCapabilities);
       expect(content1.metadata?.fromCache).toBe(false);
 
       // Second resolution should come from cache
-      const content2 = await resolver.resolveBlockContent(mockBlock, mockCapabilities);
+      const content2 = await resolver.resolveElementContent(mockElement, mockCapabilities);
       expect(content2.metadata?.fromCache).toBe(true);
       expect(content2.data).toBe(content1.data);
     });
 
     it('should skip cache when disabled', async () => {
-      const content1 = await resolver.resolveBlockContent(
-        mockBlock, 
+      const content1 = await resolver.resolveElementContent(
+        mockElement, 
         mockCapabilities, 
         { useCache: false }
       );
       expect(content1.metadata?.fromCache).toBe(false);
 
-      const content2 = await resolver.resolveBlockContent(
-        mockBlock, 
+      const content2 = await resolver.resolveElementContent(
+        mockElement, 
         mockCapabilities, 
         { useCache: false }
       );

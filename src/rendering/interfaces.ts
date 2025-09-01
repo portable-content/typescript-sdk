@@ -2,10 +2,10 @@
  * @fileoverview Framework-agnostic rendering interfaces
  */
 
-import type { Block, PayloadSource, Capabilities } from '../types';
+import type { Element, PayloadSource, Capabilities } from '../types';
 
 /**
- * Result of rendering a block
+ * Result of rendering an element
  */
 export interface RenderResult<T = unknown> {
   /** Rendered content (framework-specific) */
@@ -33,24 +33,24 @@ export interface RenderContext {
 }
 
 /**
- * Base interface for block renderers
+ * Base interface for element renderers
  */
-export interface BlockRenderer<TProps = unknown, TResult = unknown> {
-  /** Block kind this renderer handles */
+export interface ElementRenderer<TProps = unknown, TResult = unknown> {
+  /** Element kind this renderer handles */
   readonly kind: string;
 
   /** Priority for renderer selection (higher = preferred) */
   readonly priority: number;
 
   /**
-   * Check if this renderer can handle the given block
+   * Check if this renderer can handle the given element
    */
-  canRender(block: Block, context: RenderContext): boolean;
+  canRender(element: Element, context: RenderContext): boolean;
 
   /**
-   * Render the block with given props
+   * Render the element with given props
    */
-  render(block: Block, props: TProps, context: RenderContext): Promise<RenderResult<TResult>>;
+  render(element: Element, props: TProps, context: RenderContext): Promise<RenderResult<TResult>>;
 
   /**
    * Get default props for this renderer
@@ -64,13 +64,19 @@ export interface BlockRenderer<TProps = unknown, TResult = unknown> {
 }
 
 /**
- * Registry for managing block renderers
+ * @deprecated Use ElementRenderer instead. Will be removed in v0.4.0
+ */
+export interface BlockRenderer<TProps = unknown, TResult = unknown>
+  extends ElementRenderer<TProps, TResult> {}
+
+/**
+ * Registry for managing element renderers
  */
 export interface RendererRegistry {
   /**
-   * Register a renderer for a block kind
+   * Register a renderer for an element kind
    */
-  register<TProps, TResult>(renderer: BlockRenderer<TProps, TResult>): void;
+  register<TProps, TResult>(renderer: ElementRenderer<TProps, TResult>): void;
 
   /**
    * Unregister a renderer
@@ -78,14 +84,14 @@ export interface RendererRegistry {
   unregister(kind: string, priority?: number): void;
 
   /**
-   * Get the best renderer for a block
+   * Get the best renderer for an element
    */
-  getRenderer(block: Block, context: RenderContext): BlockRenderer | null;
+  getRenderer(element: Element, context: RenderContext): ElementRenderer | null;
 
   /**
    * Get all renderers for a kind
    */
-  getRenderers(kind: string): BlockRenderer[];
+  getRenderers(kind: string): ElementRenderer[];
 
   /**
    * Check if a kind can be rendered
@@ -107,11 +113,11 @@ export interface ContentProcessor {
   ): Promise<unknown>;
 
   /**
-   * Process individual block
+   * Process individual element
    */
-  processBlock(
-    block: Block,
+  processElement(
+    element: Element,
     capabilities: Capabilities,
     options?: Record<string, unknown>
-  ): Promise<Block>;
+  ): Promise<Element>;
 }

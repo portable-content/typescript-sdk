@@ -5,7 +5,7 @@
  * and preparing them for rendering.
  */
 
-import type { ContentManifest, Block, Capabilities } from '../types';
+import type { ContentManifest, Element, Capabilities } from '../types';
 import type { ContentProcessor } from './interfaces';
 import { PayloadSourceSelector } from './variant-selector';
 
@@ -29,28 +29,30 @@ export class DefaultContentProcessor implements ContentProcessor {
       processedContent = this.applyRepresentation(content, options.representation as string);
     }
 
-    // Process each block
-    const processedBlocks = await Promise.all(
-      processedContent.blocks.map((block) => this.processBlock(block, capabilities, options))
+    // Process each element (formerly blocks)
+    const processedElements = await Promise.all(
+      processedContent.elements.map((element) =>
+        this.processElement(element, capabilities, options)
+      )
     );
 
     return {
       ...processedContent,
-      blocks: processedBlocks,
+      elements: processedElements,
     };
   }
 
   /**
-   * Process individual block
+   * Process individual element (formerly block)
    */
-  async processBlock(
-    block: Block,
+  async processElement(
+    element: Element,
     _capabilities: Capabilities,
     _options?: Record<string, unknown>
-  ): Promise<Block> {
-    // The block content structure already contains primary/source/alternatives
+  ): Promise<Element> {
+    // The element content structure already contains primary/source/alternatives
     // No need to modify it - the selector will choose the best one at render time
-    return block;
+    return element;
   }
 
   /**
@@ -62,12 +64,14 @@ export class DefaultContentProcessor implements ContentProcessor {
       return content;
     }
 
-    const allowedBlockIds = new Set(repr.blocks);
-    const filteredBlocks = content.blocks.filter((block) => allowedBlockIds.has(block.id));
+    const allowedElementIds = new Set(repr.elements);
+    const filteredElements = content.elements.filter((element) =>
+      allowedElementIds.has(element.id)
+    );
 
     return {
       ...content,
-      blocks: filteredBlocks,
+      elements: filteredElements,
     };
   }
 }

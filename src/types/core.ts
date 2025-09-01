@@ -1,5 +1,6 @@
 /**
  * @fileoverview Core data model interfaces for the Portable Content System
+ * Updated for Element-based architecture with event system support
  */
 
 /**
@@ -14,8 +15,8 @@ export interface ContentManifest {
   title?: string;
   /** Optional summary for search and AI processing */
   summary?: string;
-  /** Array of content blocks */
-  blocks: Block[];
+  /** Array of content elements */
+  elements: Element[];
   /** Named representations for different views */
   representations?: Record<string, Representation>;
   /** ISO 8601 creation timestamp */
@@ -27,27 +28,77 @@ export interface ContentManifest {
 }
 
 /**
- * Base interface for all content blocks
+ * Base interface for all content elements (formerly blocks)
  */
-export interface Block {
-  /** Unique identifier for the block */
+export interface Element {
+  /** Unique identifier for the element (dynamic UUID) */
   id: string;
-  /** Block type identifier (e.g., 'markdown', 'mermaid', 'image') */
-  kind: string;
+  /** Element type identifier */
+  kind: 'markdown' | 'image' | 'mermaid' | 'video' | 'document';
   /** Structured content with primary delivery format */
-  content: BlockContent;
+  content: ElementContent;
+  /** Optional event targeting ID for dynamic updates */
+  eventId?: string;
+  /** Element metadata for event system and processing */
+  metadata?: ElementMetadata;
 }
 
 /**
- * Structured content for blocks with primary delivery format and alternatives
+ * Structured content for elements with primary delivery format and alternatives
  */
-export interface BlockContent {
+export interface ElementContent {
   /** Primary content format for delivery to clients */
   primary: PayloadSource;
   /** Optional source format for storage/editing (backend use) */
   source?: PayloadSource;
   /** Optional alternative delivery formats */
   alternatives?: PayloadSource[];
+  /** Optional variants for different contexts */
+  variants?: ElementVariant[];
+  /** Optional transform configurations */
+  transforms?: TransformConfig[];
+}
+
+/**
+ * Element metadata for event system and processing
+ */
+export interface ElementMetadata {
+  /** Creation timestamp */
+  createdAt?: string;
+  /** Last update timestamp */
+  updatedAt?: string;
+  /** Creator identifier */
+  createdBy?: string;
+  /** Element version for optimistic updates */
+  version?: number;
+  /** Custom metadata */
+  [key: string]: unknown;
+}
+
+/**
+ * Element variant definition
+ */
+export interface ElementVariant {
+  /** Variant identifier */
+  id: string;
+  /** Variant name/label */
+  name: string;
+  /** Variant payload source */
+  payloadSource: PayloadSource;
+  /** Variant metadata */
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Transform configuration
+ */
+export interface TransformConfig {
+  /** Transform type/pipeline to run */
+  type: string;
+  /** Transform parameters */
+  params?: Record<string, unknown>;
+  /** Target output formats */
+  outputFormats?: string[];
 }
 
 /**
@@ -119,11 +170,11 @@ export interface ImagePayloadSource extends PayloadSource {
 }
 
 /**
- * Named representation defining which blocks to include
+ * Named representation defining which elements to include
  */
 export interface Representation {
-  /** Array of block IDs to include in this representation */
-  blocks: string[];
+  /** Array of element IDs to include in this representation */
+  elements: string[];
   /** Optional metadata for the representation */
   metadata?: Record<string, unknown>;
 }

@@ -2,16 +2,16 @@
  * @fileoverview Mock content factory for testing rendering system
  */
 
-import type { ContentManifest, Block, PayloadSource, Capabilities } from '../../src/types';
+import type { ContentManifest, Element, PayloadSource, Capabilities } from '../../src/types';
 
 /**
  * Factory for creating mock content for comprehensive testing
  */
 export class MockContentFactory {
   /**
-   * Create a mock image block with customizable alternatives
+   * Create a mock image element with customizable alternatives
    */
-  static createImageBlock(alternatives?: Partial<PayloadSource>[]): Block {
+  static createImageElement(alternatives?: Partial<PayloadSource>[]): Element {
     const defaultAlternatives: PayloadSource[] = [
       {
         type: 'external',
@@ -46,9 +46,9 @@ export class MockContentFactory {
   }
 
   /**
-   * Create a mock markdown block with customizable source
+   * Create a mock markdown element with customizable source
    */
-  static createMarkdownBlock(source?: string): Block {
+  static createMarkdownElement(source?: string): Element {
     const defaultSource = '# Test Markdown\n\nThis is a test markdown block for rendering tests.';
     const content = source || defaultSource;
 
@@ -73,9 +73,9 @@ export class MockContentFactory {
   }
 
   /**
-   * Create a mock Mermaid diagram block
+   * Create a mock Mermaid diagram element
    */
-  static createMermaidBlock(source?: string, theme?: string): Block {
+  static createMermaidElement(source?: string, theme?: string): Element {
     const defaultSource = 'graph TD\n    A[Start] --> B[Process]\n    B --> C[End]';
     const content = source || defaultSource;
 
@@ -115,20 +115,20 @@ export class MockContentFactory {
     includeMarkdown?: boolean;
     includeImage?: boolean;
     includeMermaid?: boolean;
-    representations?: Record<string, { blocks: string[] }>;
+    representations?: Record<string, { elements: string[] }>;
   }): ContentManifest {
-    const blocks: Block[] = [];
+    const elements: Element[] = [];
 
     if (options?.includeMarkdown !== false) {
-      blocks.push(this.createMarkdownBlock());
+      elements.push(this.createMarkdownElement());
     }
 
     if (options?.includeImage !== false) {
-      blocks.push(this.createImageBlock());
+      elements.push(this.createImageElement());
     }
 
     if (options?.includeMermaid !== false) {
-      blocks.push(this.createMermaidBlock());
+      elements.push(this.createMermaidElement());
     }
 
     return {
@@ -136,13 +136,13 @@ export class MockContentFactory {
       type: 'article',
       title: 'Mock Content Manifest',
       summary: 'A mock content manifest for testing the rendering system',
-      blocks,
+      elements,
       representations: options?.representations || {
         'full': {
-          blocks: blocks.map(b => b.id)
+          elements: elements.map(e => e.id)
         },
         'summary': {
-          blocks: blocks.slice(0, 1).map(b => b.id)
+          elements: elements.slice(0, 1).map(e => e.id)
         }
       },
       createdAt: new Date().toISOString(),
@@ -265,10 +265,10 @@ export class MockContentFactory {
   /**
    * Create a block with no acceptable payload sources (for fallback testing)
    */
-  static createUnrenderableBlock(): Block {
+  static createUnrenderableBlock(): Element {
     return {
       id: 'unrenderable-block',
-      kind: 'custom',
+      kind: 'document',
       content: {
         primary: {
           type: 'external',
@@ -289,14 +289,14 @@ export class MockContentFactory {
   /**
    * Create edge case scenarios for testing
    */
-  static createEdgeCaseBlock(scenario: 'empty-alternatives' | 'inline-only' | 'huge-file' | 'tiny-file'): Block {
+  static createEdgeCaseBlock(scenario: 'empty-alternatives' | 'inline-only' | 'huge-file' | 'tiny-file'): Element {
     const baseId = `edge-case-${scenario}`;
 
     switch (scenario) {
       case 'empty-alternatives':
         return {
           id: baseId,
-          kind: 'test',
+          kind: 'markdown',
           content: {
             primary: {
               type: 'inline',
@@ -309,7 +309,7 @@ export class MockContentFactory {
       case 'inline-only':
         return {
           id: baseId,
-          kind: 'test',
+          kind: 'markdown',
           content: {
             primary: {
               type: 'inline',
@@ -322,7 +322,7 @@ export class MockContentFactory {
       case 'huge-file':
         return {
           id: baseId,
-          kind: 'test',
+          kind: 'markdown',
           content: {
             primary: {
               type: 'external',
@@ -335,7 +335,7 @@ export class MockContentFactory {
       case 'tiny-file':
         return {
           id: baseId,
-          kind: 'test',
+          kind: 'markdown',
           content: {
             primary: {
               type: 'external',
@@ -348,7 +348,7 @@ export class MockContentFactory {
       default:
         return {
           id: baseId,
-          kind: 'test',
+          kind: 'markdown',
           content: {
             primary: {
               type: 'inline',

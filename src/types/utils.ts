@@ -1,29 +1,38 @@
 /**
  * @fileoverview Utility types and builder classes
+ * Updated for Element-based architecture
  */
 
-import type { ContentManifest, Block, BlockContent, PayloadSource } from './core';
-import type { BlockTypeMap } from './blocks';
+import type {
+  ContentManifest,
+  Element,
+  ElementContent,
+  ElementMetadata,
+  ElementVariant,
+  TransformConfig,
+  PayloadSource,
+} from './core';
+import type { ElementTypeMap } from './elements';
 
 /**
- * Utility type to extract content type from block kind
- * Uses BlockTypeMap for extensibility
+ * Utility type to extract content type from element kind
+ * Uses ElementTypeMap for extensibility
  */
-export type ContentForKind<K extends keyof BlockTypeMap> = BlockTypeMap[K]['content'];
+export type ContentForElementKind<K extends keyof ElementTypeMap> = ElementTypeMap[K]['content'];
 
 /**
- * Utility type for unknown block kinds (fallback)
+ * Utility type for unknown element kinds (fallback)
  */
-export type ContentForUnknownKind<K extends string> = K extends keyof BlockTypeMap
-  ? ContentForKind<K>
-  : BlockContent;
+export type ContentForUnknownElementKind<K extends string> = K extends keyof ElementTypeMap
+  ? ContentForElementKind<K>
+  : ElementContent;
 
 /**
  * Utility type for partial updates
  */
-export type PartialContentManifest = Partial<Omit<ContentManifest, 'id' | 'blocks'>> & {
+export type PartialContentManifest = Partial<Omit<ContentManifest, 'id' | 'elements'>> & {
   id: string;
-  blocks?: Partial<Block>[];
+  elements?: Partial<Element>[];
 };
 
 /**
@@ -31,7 +40,7 @@ export type PartialContentManifest = Partial<Omit<ContentManifest, 'id' | 'block
  */
 export class ContentManifestBuilder {
   private manifest: Partial<ContentManifest> = {
-    blocks: [],
+    elements: [],
   };
 
   constructor(id: string, type: string) {
@@ -49,8 +58,8 @@ export class ContentManifestBuilder {
     return this;
   }
 
-  addBlock(block: Block): this {
-    this.manifest.blocks = [...(this.manifest.blocks || []), block];
+  addElement(element: Element): this {
+    this.manifest.elements = [...(this.manifest.elements || []), element];
     return this;
   }
 
@@ -71,7 +80,7 @@ export class ContentManifestBuilder {
     const now = new Date().toISOString();
     return {
       ...this.manifest,
-      blocks: this.manifest.blocks || [],
+      elements: this.manifest.elements || [],
       createdAt: this.manifest.createdAt || now,
       updatedAt: this.manifest.updatedAt || now,
     } as ContentManifest;
@@ -79,52 +88,78 @@ export class ContentManifestBuilder {
 }
 
 /**
- * Builder class for creating Blocks
- * Supports both known and unknown block types
+ * Builder class for creating Elements
+ * Supports both known and unknown element types
  */
-export class BlockBuilder<K extends string> {
-  private block: Partial<Block> = {};
+export class ElementBuilder<K extends Element['kind']> {
+  private element: Partial<Element> = {};
 
   constructor(id: string, kind: K) {
-    this.block.id = id;
-    this.block.kind = kind;
+    this.element.id = id;
+    this.element.kind = kind;
   }
 
-  content(content: ContentForUnknownKind<K>): this {
-    this.block.content = content;
+  content(content: ContentForUnknownElementKind<K>): this {
+    this.element.content = content;
     return this;
   }
 
   primary(primary: PayloadSource): this {
-    if (!this.block.content) {
-      this.block.content = { primary };
+    if (!this.element.content) {
+      this.element.content = { primary };
     } else {
-      this.block.content.primary = primary;
+      this.element.content.primary = primary;
     }
     return this;
   }
 
   source(source: PayloadSource): this {
-    if (!this.block.content) {
+    if (!this.element.content) {
       throw new Error('Must set primary content before source');
     }
-    this.block.content.source = source;
+    this.element.content.source = source;
     return this;
   }
 
   addAlternative(alternative: PayloadSource): this {
-    if (!this.block.content) {
+    if (!this.element.content) {
       throw new Error('Must set primary content before alternatives');
     }
-    this.block.content.alternatives = [...(this.block.content.alternatives || []), alternative];
+    this.element.content.alternatives = [...(this.element.content.alternatives || []), alternative];
     return this;
   }
 
-  build(): Block {
-    if (!this.block.content?.primary) {
-      throw new Error('Block must have primary content');
+  addVariant(variant: ElementVariant): this {
+    if (!this.element.content) {
+      throw new Error('Must set primary content before variants');
     }
-    return this.block as Block;
+    this.element.content.variants = [...(this.element.content.variants || []), variant];
+    return this;
+  }
+
+  addTransform(transform: TransformConfig): this {
+    if (!this.element.content) {
+      throw new Error('Must set primary content before transforms');
+    }
+    this.element.content.transforms = [...(this.element.content.transforms || []), transform];
+    return this;
+  }
+
+  eventId(eventId: string): this {
+    this.element.eventId = eventId;
+    return this;
+  }
+
+  metadata(metadata: ElementMetadata): this {
+    this.element.metadata = { ...this.element.metadata, ...metadata };
+    return this;
+  }
+
+  build(): Element {
+    if (!this.element.content?.primary) {
+      throw new Error('Element must have primary content');
+    }
+    return this.element as Element;
   }
 }
 

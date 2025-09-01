@@ -9,7 +9,7 @@ import {
   CapabilityDetector
 } from '../../src/rendering';
 import { MockContentFactory } from '../__mocks__/content-factory';
-import type { Block, Capabilities } from '../../src/types';
+import type { Element, Capabilities } from '../../src/types';
 import type { BlockRenderer, RenderContext, RenderResult } from '../../src/rendering/interfaces';
 
 // Mock renderer implementations for integration testing
@@ -17,11 +17,11 @@ class MockMarkdownRenderer implements BlockRenderer {
   readonly kind = 'markdown';
   readonly priority = 1;
 
-  canRender(block: Block, context: RenderContext): boolean {
+  canRender(block: Element, context: RenderContext): boolean {
     return block.kind === 'markdown';
   }
 
-  async render(block: Block, props: any, context: RenderContext): Promise<RenderResult> {
+  async render(block: Element, props: any, context: RenderContext): Promise<RenderResult> {
     const selector = new PayloadSourceSelector();
     const payloadSource = selector.selectBestPayloadSource(block, context.capabilities);
 
@@ -41,11 +41,11 @@ class MockImageRenderer implements BlockRenderer {
   readonly kind = 'image';
   readonly priority = 1;
 
-  canRender(block: Block, context: RenderContext): boolean {
+  canRender(block: Element, context: RenderContext): boolean {
     return block.kind === 'image';
   }
 
-  async render(block: Block, props: any, context: RenderContext): Promise<RenderResult> {
+  async render(block: Element, props: any, context: RenderContext): Promise<RenderResult> {
     const selector = new PayloadSourceSelector();
     const payloadSource = selector.selectBestPayloadSource(block, context.capabilities);
 
@@ -74,11 +74,11 @@ class MockMermaidRenderer implements BlockRenderer {
   readonly kind = 'mermaid';
   readonly priority = 1;
 
-  canRender(block: Block, context: RenderContext): boolean {
+  canRender(block: Element, context: RenderContext): boolean {
     return block.kind === 'mermaid';
   }
 
-  async render(block: Block, props: any, context: RenderContext): Promise<RenderResult> {
+  async render(block: Element, props: any, context: RenderContext): Promise<RenderResult> {
     const selector = new PayloadSourceSelector();
     const payloadSource = selector.selectBestPayloadSource(block, context.capabilities);
 
@@ -118,7 +118,7 @@ describe('Rendering System Integration', () => {
 
       // Render each block
       const renderResults = [];
-      for (const block of processedContent.blocks) {
+      for (const block of processedContent.elements) {
         const renderer = registry.getRenderer(block, context);
         if (renderer) {
           const result = await renderer.render(block, {}, context);
@@ -140,12 +140,12 @@ describe('Rendering System Integration', () => {
       const context: RenderContext = { capabilities };
 
       const processedContent = await processor.processContent(content, capabilities);
-      const imageBlock = processedContent.blocks.find(b => b.kind === 'image');
+      const imageElement = processedContent.elements.find(b => b.kind === 'image');
 
-      expect(imageBlock).toBeDefined();
+      expect(imageElement).toBeDefined();
 
-      const renderer = registry.getRenderer(imageBlock!, context);
-      const result = await renderer!.render(imageBlock!, {}, context);
+      const renderer = registry.getRenderer(imageElement!, context);
+      const result = await renderer!.render(imageElement!, {}, context);
 
       // Should select appropriate payload source for mobile
       expect(result.payloadSource).toBeDefined();
@@ -161,10 +161,10 @@ describe('Rendering System Integration', () => {
       const context: RenderContext = { capabilities };
 
       const processedContent = await processor.processContent(content, capabilities);
-      const imageBlock = processedContent.blocks.find(b => b.kind === 'image');
+      const imageElement = processedContent.elements.find(b => b.kind === 'image');
 
-      const renderer = registry.getRenderer(imageBlock!, context);
-      const result = await renderer!.render(imageBlock!, {}, context);
+      const renderer = registry.getRenderer(imageElement!, context);
+      const result = await renderer!.render(imageElement!, {}, context);
 
       // Should prefer optimized content for slow networks
       expect(result.payloadSource).toBeDefined();
@@ -182,8 +182,8 @@ describe('Rendering System Integration', () => {
         { representation: 'summary' }
       );
 
-      expect(summaryContent.blocks).toHaveLength(1);
-      expect(summaryContent.blocks[0].kind).toBe('markdown');
+      expect(summaryContent.elements).toHaveLength(1);
+      expect(summaryContent.elements[0].kind).toBe('markdown');
 
       // Process with full representation
       const fullContent = await processor.processContent(
@@ -192,39 +192,39 @@ describe('Rendering System Integration', () => {
         { representation: 'full' }
       );
 
-      expect(fullContent.blocks).toHaveLength(3);
+      expect(fullContent.elements).toHaveLength(3);
     });
   });
 
   describe('PayloadSource Selection Optimization', () => {
     it('should select WebP over JPEG when supported', async () => {
-      const imageBlock = MockContentFactory.createImageBlock();
+      const imageElement = MockContentFactory.createImageElement();
       const capabilities: Capabilities = {
         accept: ['image/webp', 'image/jpeg', 'image/png']
       };
       const context: RenderContext = { capabilities };
 
-      const renderer = registry.getRenderer(imageBlock, context);
-      const result = await renderer!.render(imageBlock, {}, context);
+      const renderer = registry.getRenderer(imageElement, context);
+      const result = await renderer!.render(imageElement, {}, context);
 
       expect(result.payloadSource?.mediaType).toBe('image/webp');
     });
 
     it('should fallback to supported formats', async () => {
-      const imageBlock = MockContentFactory.createImageBlock();
+      const imageElement = MockContentFactory.createImageElement();
       const capabilities: Capabilities = {
         accept: ['image/png'] // Only PNG supported
       };
       const context: RenderContext = { capabilities };
 
-      const renderer = registry.getRenderer(imageBlock, context);
-      const result = await renderer!.render(imageBlock, {}, context);
+      const renderer = registry.getRenderer(imageElement, context);
+      const result = await renderer!.render(imageElement, {}, context);
 
       expect(result.payloadSource?.mediaType).toBe('image/png');
     });
 
     it('should handle high-density displays', async () => {
-      const imageBlock = MockContentFactory.createImageBlock([
+      const imageElement = MockContentFactory.createImageElement([
         { type: 'external', mediaType: 'image/png', uri: 'standard.png', width: 800, height: 600 },
         { type: 'external', mediaType: 'image/png', uri: 'retina.png', width: 1600, height: 1200 }
       ]);
@@ -235,8 +235,8 @@ describe('Rendering System Integration', () => {
       };
       const context: RenderContext = { capabilities };
 
-      const renderer = registry.getRenderer(imageBlock, context);
-      const result = await renderer!.render(imageBlock, {}, context);
+      const renderer = registry.getRenderer(imageElement, context);
+      const result = await renderer!.render(imageElement, {}, context);
 
       // Should prefer higher resolution for high-density displays
       expect(result.payloadSource?.width).toBeGreaterThanOrEqual(1600);
@@ -245,21 +245,21 @@ describe('Rendering System Integration', () => {
 
   describe('Error Handling and Fallbacks', () => {
     it('should handle blocks with no suitable payload sources', async () => {
-      const unrederableBlock = MockContentFactory.createUnrenderableBlock();
+      const unrederableElement = MockContentFactory.createUnrenderableBlock();
       const capabilities: Capabilities = { accept: ['text/plain', 'image/png'] };
       const context: RenderContext = { capabilities };
 
-      const renderer = registry.getRenderer(unrederableBlock, context);
+      const renderer = registry.getRenderer(unrederableElement, context);
       expect(renderer).toBeNull(); // No renderer can handle this block
     });
 
     it('should handle blocks with no alternatives gracefully', async () => {
-      const emptyBlock = MockContentFactory.createEdgeCaseBlock('empty-alternatives');
+      const emptyElement = MockContentFactory.createEdgeCaseBlock('empty-alternatives');
       const capabilities: Capabilities = { accept: ['text/plain'] };
       const context: RenderContext = { capabilities };
 
-      const processedBlock = await processor.processBlock(emptyBlock, capabilities);
-      expect(processedBlock.content.alternatives).toBeUndefined();
+      const processedElement = await processor.processElement(emptyElement, capabilities);
+      expect(processedElement.content.alternatives).toBeUndefined();
     });
 
     it('should provide error callbacks', async () => {
@@ -294,8 +294,8 @@ describe('Rendering System Integration', () => {
       // Create content with many blocks
       const largeContent = {
         ...MockContentFactory.createContentManifest(),
-        blocks: Array.from({ length: 100 }, (_, i) => ({
-          ...MockContentFactory.createMarkdownBlock(`# Block ${i}`),
+        elements: Array.from({ length: 100 }, (_, i) => ({
+          ...MockContentFactory.createMarkdownElement(`# Element ${i}`),
           id: `block-${i}`
         }))
       };
@@ -307,13 +307,13 @@ describe('Rendering System Integration', () => {
 
       const processingTime = Date.now() - startTime;
 
-      expect(processedContent.blocks).toHaveLength(100);
+      expect(processedContent.elements).toHaveLength(100);
       expect(processingTime).toBeLessThan(1000); // Should process in under 1 second
     });
 
     it('should handle blocks with many alternatives efficiently', async () => {
       const blockWithManyAlternatives = {
-        ...MockContentFactory.createImageBlock(),
+        ...MockContentFactory.createImageElement(),
         content: {
           primary: { type: 'external' as const, mediaType: 'image/png', uri: 'test.png' },
           alternatives: MockContentFactory.createOptimizedPayloadSources('format-variety')
@@ -321,10 +321,10 @@ describe('Rendering System Integration', () => {
       };
 
       const capabilities: Capabilities = { accept: ['image/webp', 'image/jpeg', 'image/png'] };
-      const processedBlock = await processor.processBlock(blockWithManyAlternatives, capabilities);
+      const processedElement = await processor.processElement(blockWithManyAlternatives, capabilities);
 
-      // Block should remain unchanged with new processor
-      expect(processedBlock.content.alternatives?.length).toBeGreaterThan(0);
+      // Element should remain unchanged with new processor
+      expect(processedElement.content.alternatives?.length).toBeGreaterThan(0);
     });
   });
 

@@ -1,8 +1,10 @@
 /**
  * @fileoverview Main entry point for the Portable Content TypeScript SDK
- * 
+ *
  * This SDK provides framework-agnostic tools for working with the Portable Content System,
- * including data models, API clients, and rendering utilities.
+ * including data models, API clients, rendering utilities, and event-driven capabilities.
+ *
+ * Updated for Element-based architecture with event system support.
  */
 
 // Core types and interfaces
@@ -23,5 +25,14 @@ export * from './utils';
 // Styling utilities
 export * from './styling';
 
+// Event system (will be implemented in Phase 2)
+// export * from './events';
+
+// Transport layer (will be implemented in Phase 2)
+// export * from './transport';
+
+// Framework integrations (will be implemented in Phase 3)
+// export * from './integrations';
+
 // Version information
-export const VERSION = '0.2.0';
+export const VERSION = '0.3.0-alpha.1';

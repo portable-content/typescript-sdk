@@ -5,12 +5,18 @@
 import { z } from 'zod';
 import {
   ContentManifestSchema,
-  BlockSchema,
-  BlockContentSchema,
+  ElementSchema,
+  ElementContentSchema,
   PayloadSourceSchema,
   CapabilitiesSchema,
 } from './schemas';
-import type { ContentManifest, Block, PayloadSource, Capabilities } from '../types';
+import type {
+  ContentManifest,
+  Element,
+  ElementContent,
+  PayloadSource,
+  Capabilities,
+} from '../types';
 
 /**
  * Validation result type
@@ -45,11 +51,29 @@ export function validateContentManifest(data: unknown): ValidationResult<Content
 export const validateContentItem = validateContentManifest;
 
 /**
- * Validate a Block
+ * Validate an Element
  */
-export function validateBlock(data: unknown): ValidationResult<Block> {
+export function validateElement(data: unknown): ValidationResult<Element> {
   try {
-    const result = BlockSchema.parse(data);
+    const result = ElementSchema.parse(data);
+    return { success: true, data: result };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        errors: error.errors.map((e) => `${e.path.join('.')}: ${e.message}`),
+      };
+    }
+    return { success: false, errors: ['Unknown validation error'] };
+  }
+}
+
+/**
+ * Validate ElementContent
+ */
+export function validateElementContent(data: unknown): ValidationResult<ElementContent> {
+  try {
+    const result = ElementContentSchema.parse(data);
     return { success: true, data: result };
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -91,24 +115,6 @@ export const validateVariant = validatePayloadSource;
 export function validateCapabilities(data: unknown): ValidationResult<Capabilities> {
   try {
     const result = CapabilitiesSchema.parse(data);
-    return { success: true, data: result };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        errors: error.errors.map((e) => `${e.path.join('.')}: ${e.message}`),
-      };
-    }
-    return { success: false, errors: ['Unknown validation error'] };
-  }
-}
-
-/**
- * Validate block content structure
- */
-export function validateBlockContent(content: unknown): ValidationResult<unknown> {
-  try {
-    const result = BlockContentSchema.parse(content);
     return { success: true, data: result };
   } catch (error) {
     if (error instanceof z.ZodError) {

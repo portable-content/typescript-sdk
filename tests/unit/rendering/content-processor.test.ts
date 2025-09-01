@@ -3,7 +3,7 @@
  */
 
 import { DefaultContentProcessor } from '../../../src/rendering/content-processor';
-import type { ContentManifest, Block, PayloadSource, Capabilities } from '../../../src/types';
+import type { ContentManifest, Element, PayloadSource, Capabilities } from '../../../src/types';
 
 describe('DefaultContentProcessor', () => {
   let processor: DefaultContentProcessor;
@@ -17,9 +17,9 @@ describe('DefaultContentProcessor', () => {
       const content: ContentManifest = {
         id: 'test-content',
         type: 'article',
-        blocks: [
+        elements: [
           {
-            id: 'block1',
+            id: 'element1',
             kind: 'markdown',
             content: {
               primary: { type: 'external', mediaType: 'text/markdown', uri: 'test.md' },
@@ -29,7 +29,7 @@ describe('DefaultContentProcessor', () => {
             }
           },
           {
-            id: 'block2',
+            id: 'element2',
             kind: 'image',
             content: {
               primary: { type: 'external', mediaType: 'image/webp', uri: 'test.webp' },
@@ -47,24 +47,24 @@ describe('DefaultContentProcessor', () => {
 
       const result = await processor.processContent(content, capabilities);
 
-      expect(result.blocks).toHaveLength(2);
-      // The blocks should remain unchanged since the processor now just returns the original blocks
-      expect(result.blocks[0].content.primary.mediaType).toBe('text/markdown');
-      expect(result.blocks[1].content.primary.mediaType).toBe('image/webp');
+      expect(result.elements).toHaveLength(2);
+      // The elements should remain unchanged since the processor now just returns the original elements
+      expect(result.elements[0].content.primary.mediaType).toBe('text/markdown');
+      expect(result.elements[1].content.primary.mediaType).toBe('image/webp');
     });
 
     it('should apply representation filtering when specified', async () => {
       const content: ContentManifest = {
         id: 'test-content',
         type: 'article',
-        blocks: [
-          { id: 'block1', kind: 'markdown', content: { primary: { type: 'inline', mediaType: 'text/markdown', source: '# Test' } } },
-          { id: 'block2', kind: 'image', content: { primary: { type: 'external', mediaType: 'image/png', uri: 'test.png' } } },
-          { id: 'block3', kind: 'mermaid', content: { primary: { type: 'inline', mediaType: 'text/plain', source: 'graph TD; A-->B;' } } }
+        elements: [
+          { id: 'element1', kind: 'markdown', content: { primary: { type: 'inline', mediaType: 'text/markdown', source: '# Test' } } },
+          { id: 'element2', kind: 'image', content: { primary: { type: 'external', mediaType: 'image/png', uri: 'test.png' } } },
+          { id: 'element3', kind: 'mermaid', content: { primary: { type: 'inline', mediaType: 'text/plain', source: 'graph TD; A-->B;' } } }
         ],
         representations: {
           'summary': {
-            blocks: ['block1', 'block3']
+            elements: ['element1', 'element3']
           }
         }
       };
@@ -74,19 +74,19 @@ describe('DefaultContentProcessor', () => {
 
       const result = await processor.processContent(content, capabilities, options);
 
-      expect(result.blocks).toHaveLength(2);
-      expect(result.blocks.map(b => b.id)).toEqual(['block1', 'block3']);
+      expect(result.elements).toHaveLength(2);
+      expect(result.elements.map(b => b.id)).toEqual(['element1', 'element3']);
     });
 
     it('should handle non-existent representation gracefully', async () => {
       const content: ContentManifest = {
         id: 'test-content',
         type: 'article',
-        blocks: [
-          { id: 'block1', kind: 'markdown', content: { primary: { type: 'inline', mediaType: 'text/markdown', source: '# Test' } } }
+        elements: [
+          { id: 'element1', kind: 'markdown', content: { primary: { type: 'inline', mediaType: 'text/markdown', source: '# Test' } } }
         ],
         representations: {
-          'summary': { blocks: ['block1'] }
+          'summary': { elements: ['element1'] }
         }
       };
 
@@ -96,16 +96,16 @@ describe('DefaultContentProcessor', () => {
       const result = await processor.processContent(content, capabilities, options);
 
       // Should return original content when representation doesn't exist
-      expect(result.blocks).toHaveLength(1);
-      expect(result.blocks[0].id).toBe('block1');
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0].id).toBe('element1');
     });
 
     it('should handle content without representations', async () => {
       const content: ContentManifest = {
         id: 'test-content',
         type: 'article',
-        blocks: [
-          { id: 'block1', kind: 'markdown', content: { primary: { type: 'inline', mediaType: 'text/markdown', source: '# Test' } } }
+        elements: [
+          { id: 'element1', kind: 'markdown', content: { primary: { type: 'inline', mediaType: 'text/markdown', source: '# Test' } } }
         ]
       };
 
@@ -115,14 +115,14 @@ describe('DefaultContentProcessor', () => {
       const result = await processor.processContent(content, capabilities, options);
 
       // Should return original content when no representations defined
-      expect(result.blocks).toHaveLength(1);
-      expect(result.blocks[0].id).toBe('block1');
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0].id).toBe('element1');
     });
   });
 
-  describe('processBlock', () => {
+  describe('processElement', () => {
     it('should return block unchanged with new content structure', async () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
         kind: 'image',
         content: {
@@ -138,7 +138,7 @@ describe('DefaultContentProcessor', () => {
         accept: ['image/webp', 'image/jpeg', 'image/png']
       };
 
-      const result = await processor.processBlock(block, capabilities);
+      const result = await processor.processElement(block, capabilities);
 
       // With new structure, block is returned unchanged
       expect(result).toEqual(block);
@@ -147,9 +147,9 @@ describe('DefaultContentProcessor', () => {
     });
 
     it('should handle block with only primary content', async () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
-        kind: 'text',
+        kind: 'markdown',
         content: {
           primary: { type: 'inline', mediaType: 'text/plain', source: 'Hello world' }
         }
@@ -159,7 +159,7 @@ describe('DefaultContentProcessor', () => {
         accept: ['text/plain']
       };
 
-      const result = await processor.processBlock(block, capabilities);
+      const result = await processor.processElement(block, capabilities);
 
       // Should return block unchanged
       expect(result).toEqual(block);
@@ -167,7 +167,7 @@ describe('DefaultContentProcessor', () => {
     });
 
     it('should handle block with source content', async () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
         kind: 'markdown',
         content: {
@@ -180,16 +180,16 @@ describe('DefaultContentProcessor', () => {
         accept: ['text/markdown', 'text/html']
       };
 
-      const result = await processor.processBlock(block, capabilities);
+      const result = await processor.processElement(block, capabilities);
 
       expect(result).toEqual(block);
       expect(result.content.source?.source).toBe('# Test');
     });
 
     it('should handle block with no alternatives', async () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test-block',
-        kind: 'text',
+        kind: 'markdown',
         content: {
           primary: { type: 'inline', mediaType: 'text/plain', source: 'Simple text' }
         }
@@ -199,7 +199,7 @@ describe('DefaultContentProcessor', () => {
         accept: ['text/plain']
       };
 
-      const result = await processor.processBlock(block, capabilities);
+      const result = await processor.processElement(block, capabilities);
 
       expect(result).toEqual(block);
       expect(result.content.alternatives).toBeUndefined();
@@ -211,7 +211,7 @@ describe('DefaultContentProcessor', () => {
       const content: ContentManifest = {
         id: 'test-content',
         type: 'article',
-        blocks: [
+        elements: [
           { id: 'intro', kind: 'markdown', content: { primary: { type: 'inline', mediaType: 'text/markdown', source: '# Intro' } } },
           { id: 'chart', kind: 'mermaid', content: { primary: { type: 'inline', mediaType: 'text/plain', source: 'graph TD; A-->B;' } } },
           { id: 'conclusion', kind: 'markdown', content: { primary: { type: 'inline', mediaType: 'text/markdown', source: '# Conclusion' } } },
@@ -219,10 +219,10 @@ describe('DefaultContentProcessor', () => {
         ],
         representations: {
           'brief': {
-            blocks: ['intro', 'conclusion']
+            elements: ['intro', 'conclusion']
           },
           'full': {
-            blocks: ['intro', 'chart', 'conclusion', 'appendix']
+            elements: ['intro', 'chart', 'conclusion', 'appendix']
           }
         }
       };
@@ -235,8 +235,8 @@ describe('DefaultContentProcessor', () => {
         capabilities,
         { representation: 'brief' }
       );
-      expect(briefResult.blocks).toHaveLength(2);
-      expect(briefResult.blocks.map(b => b.id)).toEqual(['intro', 'conclusion']);
+      expect(briefResult.elements).toHaveLength(2);
+      expect(briefResult.elements.map(b => b.id)).toEqual(['intro', 'conclusion']);
 
       // Test full representation
       const fullResult = await processor.processContent(
@@ -244,20 +244,20 @@ describe('DefaultContentProcessor', () => {
         capabilities,
         { representation: 'full' }
       );
-      expect(fullResult.blocks).toHaveLength(4);
-      expect(fullResult.blocks.map(b => b.id)).toEqual(['intro', 'chart', 'conclusion', 'appendix']);
+      expect(fullResult.elements).toHaveLength(4);
+      expect(fullResult.elements.map(b => b.id)).toEqual(['intro', 'chart', 'conclusion', 'appendix']);
     });
 
     it('should handle representation with non-existent block IDs', async () => {
       const content: ContentManifest = {
         id: 'test-content',
         type: 'article',
-        blocks: [
-          { id: 'block1', kind: 'markdown', content: { primary: { type: 'inline', mediaType: 'text/markdown', source: '# Test' } } }
+        elements: [
+          { id: 'element1', kind: 'markdown', content: { primary: { type: 'inline', mediaType: 'text/markdown', source: '# Test' } } }
         ],
         representations: {
           'test': {
-            blocks: ['block1', 'nonexistent', 'block2']
+            elements: ['element1', 'nonexistent', 'element2']
           }
         }
       };
@@ -271,8 +271,8 @@ describe('DefaultContentProcessor', () => {
       );
 
       // Should only include existing blocks
-      expect(result.blocks).toHaveLength(1);
-      expect(result.blocks[0].id).toBe('block1');
+      expect(result.elements).toHaveLength(1);
+      expect(result.elements[0].id).toBe('element1');
     });
   });
 });

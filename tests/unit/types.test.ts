@@ -4,22 +4,22 @@
 
 import {
   DEFAULT_CAPABILITIES,
-  isMarkdownBlock,
-  isMermaidBlock,
-  isImageBlock,
+  isMarkdownElement,
+  isMermaidElement,
+  isImageElement,
   getTypedContent,
   getPrimaryContent,
   getSourceContent,
   getAlternativeContent,
   ContentManifestBuilder,
-  BlockBuilder,
-  PayloadSourceBuilder
+  ElementBuilder,
+  PayloadSourceBuilder,
 } from '../../src/types';
-import type { Block } from '../../src/types';
+import type { Element } from '../../src/types';
 
 describe('Types', () => {
-  describe('Block Type Guards', () => {
-    const markdownBlock: Block = {
+  describe('Element Type Guards', () => {
+    const markdownElement: Element = {
       id: 'test-1',
       kind: 'markdown',
       content: {
@@ -27,7 +27,7 @@ describe('Types', () => {
       }
     };
 
-    const mermaidBlock: Block = {
+    const mermaidElement: Element = {
       id: 'test-2',
       kind: 'mermaid',
       content: {
@@ -36,7 +36,7 @@ describe('Types', () => {
       }
     };
 
-    const imageBlock: Block = {
+    const imageElement: Element = {
       id: 'test-3',
       kind: 'image',
       content: {
@@ -44,27 +44,29 @@ describe('Types', () => {
       }
     };
 
-    it('should correctly identify markdown blocks', () => {
-      expect(isMarkdownBlock(markdownBlock)).toBe(true);
-      expect(isMarkdownBlock(mermaidBlock)).toBe(false);
-      expect(isMarkdownBlock(imageBlock)).toBe(false);
+    it('should correctly identify markdown elements', () => {
+      expect(isMarkdownElement(markdownElement)).toBe(true);
+      expect(isMarkdownElement(mermaidElement)).toBe(false);
+      expect(isMarkdownElement(imageElement)).toBe(false);
     });
 
-    it('should correctly identify mermaid blocks', () => {
-      expect(isMermaidBlock(mermaidBlock)).toBe(true);
-      expect(isMermaidBlock(markdownBlock)).toBe(false);
-      expect(isMermaidBlock(imageBlock)).toBe(false);
+    it('should correctly identify mermaid elements', () => {
+      expect(isMermaidElement(mermaidElement)).toBe(true);
+      expect(isMermaidElement(markdownElement)).toBe(false);
+      expect(isMermaidElement(imageElement)).toBe(false);
     });
 
-    it('should correctly identify image blocks', () => {
-      expect(isImageBlock(imageBlock)).toBe(true);
-      expect(isImageBlock(markdownBlock)).toBe(false);
-      expect(isImageBlock(mermaidBlock)).toBe(false);
+    it('should correctly identify image elements', () => {
+      expect(isImageElement(imageElement)).toBe(true);
+      expect(isImageElement(markdownElement)).toBe(false);
+      expect(isImageElement(mermaidElement)).toBe(false);
     });
+
+
   });
 
   describe('Content Extraction', () => {
-    const markdownBlock: Block = {
+    const markdownElement: Element = {
       id: 'test-1',
       kind: 'markdown',
       content: {
@@ -76,17 +78,17 @@ describe('Types', () => {
     };
 
     it('should extract typed content', () => {
-      const content = getTypedContent(markdownBlock, 'markdown');
-      expect(content).toEqual(markdownBlock.content);
+      const content = getTypedContent(markdownElement, 'markdown');
+      expect(content).toEqual(markdownElement.content);
     });
 
     it('should return null for mismatched kind', () => {
-      const content = getTypedContent(markdownBlock, 'image');
+      const content = getTypedContent(markdownElement, 'image');
       expect(content).toBeNull();
     });
 
     it('should extract primary content', () => {
-      const primary = getPrimaryContent(markdownBlock);
+      const primary = getPrimaryContent(markdownElement);
       expect(primary).toEqual({
         type: 'inline',
         mediaType: 'text/markdown',
@@ -95,12 +97,12 @@ describe('Types', () => {
     });
 
     it('should extract source content', () => {
-      const source = getSourceContent(markdownBlock);
-      expect(source).toBeNull(); // This block has no source content
+      const source = getSourceContent(markdownElement);
+      expect(source).toBeNull(); // This element has no source content
     });
 
     it('should extract alternative content', () => {
-      const alternatives = getAlternativeContent(markdownBlock);
+      const alternatives = getAlternativeContent(markdownElement);
       expect(alternatives).toEqual([
         { type: 'external', mediaType: 'text/html', uri: 'test.html' }
       ]);
@@ -120,28 +122,30 @@ describe('Types', () => {
       expect(manifest.title).toBe('Test Document');
       expect(manifest.summary).toBe('A test document');
       expect(manifest.createdBy).toBe('test-user');
-      expect(manifest.blocks).toEqual([]);
+      expect(manifest.elements).toEqual([]);
       expect(manifest.createdAt).toBeDefined();
       expect(manifest.updatedAt).toBeDefined();
     });
 
-    it('should build Block correctly', () => {
+    it('should build Element correctly', () => {
       const primary = PayloadSourceBuilder.inline('text/markdown')
         .source('# Test')
         .build();
 
-      const block = new BlockBuilder('block-id', 'markdown')
+      const element = new ElementBuilder('element-id', 'markdown')
         .primary(primary)
         .build();
 
-      expect(block.id).toBe('block-id');
-      expect(block.kind).toBe('markdown');
-      expect(block.content.primary).toEqual({
+      expect(element.id).toBe('element-id');
+      expect(element.kind).toBe('markdown');
+      expect(element.content.primary).toEqual({
         type: 'inline',
         mediaType: 'text/markdown',
         source: '# Test'
       });
     });
+
+
 
     it('should build PayloadSource correctly', () => {
       const externalSource = PayloadSourceBuilder.external('text/html')

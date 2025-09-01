@@ -3,7 +3,7 @@
  */
 
 import { DefaultRendererRegistry } from '../../../src/rendering/renderer-registry';
-import type { Block, Capabilities } from '../../../src/types';
+import type { Element, Capabilities } from '../../../src/types';
 import type { BlockRenderer, RenderContext, RenderResult } from '../../../src/rendering/interfaces';
 
 // Mock renderer for testing
@@ -13,11 +13,11 @@ class MockRenderer implements BlockRenderer {
     public readonly priority: number = 1
   ) {}
 
-  canRender(block: Block, context: RenderContext): boolean {
+  canRender(block: Element, context: RenderContext): boolean {
     return block.kind === this.kind;
   }
 
-  async render(block: Block, props: any, context: RenderContext): Promise<RenderResult> {
+  async render(block: Element, props: any, context: RenderContext): Promise<RenderResult> {
     return {
       content: `Rendered ${block.kind}`,
       payloadSource: block.content.primary || null
@@ -32,11 +32,11 @@ class FailingMockRenderer implements BlockRenderer {
     public readonly priority: number = 1
   ) {}
 
-  canRender(block: Block, context: RenderContext): boolean {
+  canRender(block: Element, context: RenderContext): boolean {
     return false; // Always fails
   }
 
-  async render(block: Block, props: any, context: RenderContext): Promise<RenderResult> {
+  async render(block: Element, props: any, context: RenderContext): Promise<RenderResult> {
     throw new Error('Cannot render');
   }
 }
@@ -142,7 +142,7 @@ describe('DefaultRendererRegistry', () => {
       registry.register(renderer1);
       registry.register(renderer2);
 
-      const block: Block = {
+      const block: Element = {
         id: 'test',
         kind: 'markdown',
         content: {
@@ -155,9 +155,9 @@ describe('DefaultRendererRegistry', () => {
     });
 
     it('should return null for unknown block kind', () => {
-      const block: Block = {
+      const block: Element = {
         id: 'test',
-        kind: 'unknown',
+        kind: 'document',
         content: {
           primary: { type: 'inline', mediaType: 'text/plain', source: 'test' }
         }
@@ -174,7 +174,7 @@ describe('DefaultRendererRegistry', () => {
       registry.register(failingRenderer);
       registry.register(workingRenderer);
 
-      const block: Block = {
+      const block: Element = {
         id: 'test',
         kind: 'markdown',
         content: {
@@ -190,7 +190,7 @@ describe('DefaultRendererRegistry', () => {
       const failingRenderer = new FailingMockRenderer('markdown', 1);
       registry.register(failingRenderer);
 
-      const block: Block = {
+      const block: Element = {
         id: 'test',
         kind: 'markdown',
         content: {
