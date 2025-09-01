@@ -2,29 +2,21 @@
  * @fileoverview Element lifecycle management with event-driven state tracking
  */
 
-import type {
-  Element,
-  ElementContent,
-  ElementMetadata,
-} from '../types/core';
-import type {
-  ElementEvent,
-  ElementEventResult,
-  UnsubscribeFunction,
-} from '../types/events';
+import type { Element, ElementContent, ElementMetadata } from '../types/core';
+import type { ElementEvent, ElementEventResult, UnsubscribeFunction } from '../types/events';
 import { EventManager } from './event-manager';
 
 /**
  * Element lifecycle states
  */
-export type ElementLifecycleState = 
-  | 'created'      // Element created but not registered
-  | 'registered'   // Element registered with event system
-  | 'active'       // Element actively receiving updates
-  | 'suspended'    // Element temporarily suspended from updates
-  | 'updating'     // Element currently being updated
-  | 'error'        // Element in error state
-  | 'destroyed';   // Element destroyed and cleaned up
+export type ElementLifecycleState =
+  | 'created' // Element created but not registered
+  | 'registered' // Element registered with event system
+  | 'active' // Element actively receiving updates
+  | 'suspended' // Element temporarily suspended from updates
+  | 'updating' // Element currently being updated
+  | 'error' // Element in error state
+  | 'destroyed'; // Element destroyed and cleaned up
 
 /**
  * Element lifecycle event types
@@ -106,7 +98,7 @@ export class ElementLifecycleManager {
         ...metadata,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      }
+      },
     };
 
     // Set initial state
@@ -115,7 +107,7 @@ export class ElementLifecycleManager {
       elementId: id,
       eventType: 'created',
       newState: 'created',
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     return element;
@@ -196,7 +188,7 @@ export class ElementLifecycleManager {
       return {
         success: false,
         elementId,
-        errors: [`Element ${elementId} is not available for updates (state: ${currentState})`]
+        errors: [`Element ${elementId} is not available for updates (state: ${currentState})`],
       };
     }
 
@@ -210,22 +202,24 @@ export class ElementLifecycleManager {
         elementType: this.getElementType(elementId),
         eventType: 'updatePayload',
         data: {
-          payload: content.primary ? {
-            ...content.primary,
-            type: content.primary.type || 'inline',
-            mediaType: content.primary.mediaType || 'text/plain'
-          } : undefined,
-          ...options.metadata
+          payload: content.primary
+            ? {
+                ...content.primary,
+                type: content.primary.type || 'inline',
+                mediaType: content.primary.mediaType || 'text/plain',
+              }
+            : undefined,
+          ...options.metadata,
         },
         metadata: {
           timestamp: Date.now(),
           source: 'api',
           priority: 'normal',
-          ...options.metadata
+          ...options.metadata,
         },
         persistChange: options.persist,
         triggerTransforms: options.triggerTransforms,
-        validateFirst: options.validate
+        validateFirst: options.validate,
       };
 
       const result = await this.eventManager.sendEvent(event);
@@ -238,20 +232,19 @@ export class ElementLifecycleManager {
           newState: 'active',
           previousState: 'updating',
           timestamp: Date.now(),
-          metadata: options.metadata
+          metadata: options.metadata,
         });
       } else {
         this.updateElementState(elementId, 'error');
       }
 
       return result;
-
     } catch (error) {
       this.updateElementState(elementId, 'error');
       return {
         success: false,
         elementId,
-        errors: [error instanceof Error ? error.message : 'Unknown error']
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
       };
     }
   }
@@ -273,15 +266,15 @@ export class ElementLifecycleManager {
       elementType: this.getElementType(elementId),
       eventType: 'updateProps',
       data: {
-        props: properties
+        props: properties,
       },
       metadata: {
         timestamp: Date.now(),
         source: 'api',
         priority: 'normal',
-        ...options.metadata
+        ...options.metadata,
       },
-      persistChange: options.persist
+      persistChange: options.persist,
     };
 
     return await this.eventManager.sendEvent(event);
@@ -388,7 +381,7 @@ export class ElementLifecycleManager {
       suspended: 0,
       updating: 0,
       error: 0,
-      destroyed: 0
+      destroyed: 0,
     };
 
     for (const state of this.elementStates.values()) {
@@ -420,7 +413,7 @@ export class ElementLifecycleManager {
       eventType: this.getLifecycleEventType(newState),
       previousState,
       newState,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -442,14 +435,22 @@ export class ElementLifecycleManager {
    */
   private getLifecycleEventType(state: ElementLifecycleState): ElementLifecycleEventType {
     switch (state) {
-      case 'created': return 'created';
-      case 'registered': return 'registered';
-      case 'active': return 'activated';
-      case 'suspended': return 'suspended';
-      case 'updating': return 'updated';
-      case 'error': return 'error';
-      case 'destroyed': return 'destroyed';
-      default: return 'updated';
+      case 'created':
+        return 'created';
+      case 'registered':
+        return 'registered';
+      case 'active':
+        return 'activated';
+      case 'suspended':
+        return 'suspended';
+      case 'updating':
+        return 'updated';
+      case 'error':
+        return 'error';
+      case 'destroyed':
+        return 'destroyed';
+      default:
+        return 'updated';
     }
   }
 

@@ -33,7 +33,7 @@ export class EventManager {
   constructor(options: Partial<EventManagerOptions> = {}) {
     this.options = { ...DEFAULT_EVENT_MANAGER_OPTIONS, ...options };
     this.eventQueue = new EventQueue(this.options.queueOptions);
-    
+
     // Start the event processing loop
     this.startEventProcessing();
   }
@@ -47,7 +47,7 @@ export class EventManager {
     }
 
     this.elements.set(element.id, element);
-    
+
     // Emit registration event
     this.emitEvent({
       elementId: element.id,
@@ -58,7 +58,7 @@ export class EventManager {
         timestamp: Date.now(),
         source: 'system',
         priority: 'normal',
-      }
+      },
     });
   }
 
@@ -76,10 +76,10 @@ export class EventManager {
     }
 
     this.elements.delete(elementId);
-    
+
     // Clean up subscribers for this element
     this.subscribers.delete(elementId);
-    
+
     // Emit unregistration event
     this.emitEvent({
       elementId,
@@ -90,7 +90,7 @@ export class EventManager {
         timestamp: Date.now(),
         source: 'system',
         priority: 'normal',
-      }
+      },
     });
 
     return true;
@@ -111,7 +111,7 @@ export class EventManager {
         return {
           success: false,
           elementId: event.elementId,
-          errors: validation.errors || ['Event validation failed']
+          errors: validation.errors || ['Event validation failed'],
         };
       }
     }
@@ -122,18 +122,18 @@ export class EventManager {
       return {
         success: false,
         elementId: event.elementId,
-        errors: [`Element ${event.elementId} not found`]
+        errors: [`Element ${event.elementId} not found`],
       };
     }
 
     // Add to queue for processing
     const queued = this.eventQueue.enqueue(event);
-    
+
     if (!queued) {
       return {
         success: false,
         elementId: event.elementId,
-        errors: ['Failed to queue event - queue may be full']
+        errors: ['Failed to queue event - queue may be full'],
       };
     }
 
@@ -145,7 +145,7 @@ export class EventManager {
     return {
       success: true,
       elementId: event.elementId,
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
     };
   }
 
@@ -158,17 +158,19 @@ export class EventManager {
     }
 
     const results: ElementEventResult[] = [];
-    
+
     for (const event of events) {
       const result = await this.sendEvent(event);
       results.push(result);
     }
 
-    const successful = results.filter(r => r.success).map(r => r.elementId);
-    const failed = results.filter(r => !r.success).map(r => ({
-      elementId: r.elementId,
-      error: r.errors?.[0] || 'Unknown error'
-    }));
+    const successful = results.filter((r) => r.success).map((r) => r.elementId);
+    const failed = results
+      .filter((r) => !r.success)
+      .map((r) => ({
+        elementId: r.elementId,
+        error: r.errors?.[0] || 'Unknown error',
+      }));
 
     return {
       successful,
@@ -176,8 +178,8 @@ export class EventManager {
       queued: successful, // All successful events are queued
       metadata: {
         totalEvents: events.length,
-        processingTime: 0 // Will be updated during actual processing
-      }
+        processingTime: 0, // Will be updated during actual processing
+      },
     };
   }
 
@@ -243,7 +245,7 @@ export class EventManager {
    */
   getEventHistory(elementId?: string): ElementEventHistoryEntry[] {
     if (elementId) {
-      return this.eventHistory.filter(entry => entry.elementId === elementId);
+      return this.eventHistory.filter((entry) => entry.elementId === elementId);
     }
     return [...this.eventHistory];
   }
@@ -268,7 +270,7 @@ export class EventManager {
   getQueueStats(): { totalQueued: number; queueSizes: Record<string, number> } {
     return {
       totalQueued: this.eventQueue.getTotalQueueSize(),
-      queueSizes: this.eventQueue.getQueueSizes()
+      queueSizes: this.eventQueue.getQueueSizes(),
     };
   }
 
@@ -303,12 +305,12 @@ export class EventManager {
 
       try {
         const result = await this.eventQueue.flush(this.processBatchEvents.bind(this));
-        
+
         // Notify batch subscribers
         if (result.metadata && result.metadata.totalEvents > 0) {
           for (const callback of this.batchEventCallbacks) {
             try {
-              await callback([]);  // Events are already processed
+              await callback([]); // Events are already processed
             } catch (error) {
               console.error('Error in batch event callback:', error);
             }
@@ -343,13 +345,13 @@ export class EventManager {
         } else {
           failed.push({
             elementId: result.elementId,
-            error: result.errors?.[0] || 'Unknown error'
+            error: result.errors?.[0] || 'Unknown error',
           });
         }
       } catch (error) {
         failed.push({
           elementId: event.elementId,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     }
@@ -360,8 +362,8 @@ export class EventManager {
       queued: [],
       metadata: {
         totalEvents: events.length,
-        processingTime: 0
-      }
+        processingTime: 0,
+      },
     };
   }
 
@@ -374,14 +376,14 @@ export class EventManager {
       return {
         success: false,
         elementId: event.elementId,
-        errors: [`Element ${event.elementId} not found`]
+        errors: [`Element ${event.elementId} not found`],
       };
     }
 
     // Add to history
     const historyEntry: ElementEventHistoryEntry = {
       ...event,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     // Process the event based on type
@@ -393,7 +395,7 @@ export class EventManager {
       result = {
         success: false,
         elementId: event.elementId,
-        errors: [error instanceof Error ? error.message : 'Unknown error']
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
       };
       historyEntry.result = result;
     }
@@ -416,7 +418,7 @@ export class EventManager {
   private async executeEvent(element: Element, event: ElementEvent): Promise<ElementEventResult> {
     // This is where the actual element update logic would go
     // For now, we'll simulate the update
-    
+
     switch (event.eventType) {
       case 'updatePayload':
         if (event.data.payload) {
@@ -424,42 +426,42 @@ export class EventManager {
           // In a real implementation, this would update the element's content
         }
         break;
-        
+
       case 'updateProps':
         if (event.data.props) {
           // Update element properties
           Object.assign(element.metadata || {}, event.data.props);
         }
         break;
-        
+
       case 'updateVariants':
         // Update element variants
         break;
-        
+
       case 'updateStyle':
         // Update element styling
         break;
-        
+
       case 'refreshTransforms':
         // Refresh element transforms
         break;
-        
+
       case 'validateContent':
         // Validate element content
         break;
-        
+
       default:
         return {
           success: false,
           elementId: event.elementId,
-          errors: [`Unknown event type: ${event.eventType}`]
+          errors: [`Unknown event type: ${event.eventType}`],
         };
     }
 
     return {
       success: true,
       elementId: event.elementId,
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
     };
   }
 

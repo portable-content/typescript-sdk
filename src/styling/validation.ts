@@ -16,6 +16,7 @@ export interface ValidationResult {
 /**
  * Validate that an object implements the StyleAdapter interface
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function validateAdapter(adapter: any): ValidationResult {
   const result: ValidationResult = {
     valid: true,
@@ -90,6 +91,7 @@ export function validateAdapter(adapter: any): ValidationResult {
 /**
  * Validate style capabilities object
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function validateCapabilities(capabilities: any): ValidationResult {
   const result: ValidationResult = {
     valid: true,

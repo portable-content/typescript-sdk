@@ -4,6 +4,7 @@
 
 import { MockTransport } from '../../../src/transport/mock-transport';
 import type { ElementEvent } from '../../../src/types/events';
+import { createTestElementEvent, createTestElementEventWithPayload } from '../../__helpers__/test-factories';
 
 describe('MockTransport', () => {
   let transport: MockTransport;
@@ -72,17 +73,13 @@ describe('MockTransport', () => {
     });
 
     it('should send single events successfully', async () => {
-      const event: ElementEvent = {
-        elementId: 'test-element',
-        elementType: 'markdown',
-        eventType: 'updatePayload',
-        data: { payload: { source: 'Test content' } },
+      const event = createTestElementEventWithPayload('Test content', {
         metadata: {
           timestamp: Date.now(),
           source: 'test',
           priority: 'normal'
         }
-      };
+      });
 
       const result = await transport.sendEvent(event);
 
@@ -113,7 +110,7 @@ describe('MockTransport', () => {
 
       expect(result.successful).toEqual(['element-1', 'element-2']);
       expect(result.failed).toHaveLength(0);
-      expect(result.metadata.totalEvents).toBe(2);
+      expect(result.metadata?.totalEvents).toBe(2);
     });
 
     it('should fail when not connected', async () => {

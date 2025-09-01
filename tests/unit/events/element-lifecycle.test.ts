@@ -6,15 +6,21 @@ import { EventManager } from '../../../src/events/event-manager';
 import { ElementLifecycleManager } from '../../../src/events/element-lifecycle';
 import type { Element } from '../../../src/types/core';
 import type { ElementLifecycleEvent } from '../../../src/events/element-lifecycle';
+import { createTestElement, createTestElementContent, createTestEventManagerOptions } from '../../__helpers__/test-factories';
+
+// Helper function for this test file
+function createTestContent(source: string = 'Test content') {
+  return createTestElementContent({
+    primary: { type: 'inline', mediaType: 'text/plain', source }
+  });
+}
 
 describe('ElementLifecycleManager', () => {
   let eventManager: EventManager;
   let lifecycleManager: ElementLifecycleManager;
 
   beforeEach(() => {
-    eventManager = new EventManager({
-      queueOptions: { flushInterval: 10 }
-    });
+    eventManager = new EventManager(createTestEventManagerOptions());
     lifecycleManager = new ElementLifecycleManager(eventManager);
   });
 
@@ -28,7 +34,7 @@ describe('ElementLifecycleManager', () => {
       const element = await lifecycleManager.createElement(
         'test-element',
         'markdown',
-        { primary: { source: 'Test content' } },
+        createTestElementContent(),
         { title: 'Test Element' }
       );
 
@@ -44,7 +50,7 @@ describe('ElementLifecycleManager', () => {
       const element = await lifecycleManager.createElement(
         'test-element',
         'markdown',
-        { primary: { source: 'Test content' } }
+        createTestElementContent()
       );
 
       const state = lifecycleManager.getElementState(element.id);
@@ -61,7 +67,7 @@ describe('ElementLifecycleManager', () => {
       await lifecycleManager.createElement(
         'test-element',
         'markdown',
-        { primary: { source: 'Test content' } }
+        createTestElementContent()
       );
 
       expect(lifecycleEvents).toHaveLength(1);
@@ -78,7 +84,7 @@ describe('ElementLifecycleManager', () => {
       testElement = await lifecycleManager.createElement(
         'test-element',
         'markdown',
-        { primary: { source: 'Test content' } }
+        createTestElementContent()
       );
     });
 
@@ -127,7 +133,7 @@ describe('ElementLifecycleManager', () => {
       testElement = await lifecycleManager.createElement(
         'test-element',
         'markdown',
-        { primary: { source: 'Test content' } }
+        createTestContent()
       );
       await lifecycleManager.registerElement(testElement);
     });
@@ -176,7 +182,7 @@ describe('ElementLifecycleManager', () => {
       testElement = await lifecycleManager.createElement(
         'test-element',
         'markdown',
-        { primary: { source: 'Test content' } }
+        createTestContent()
       );
       await lifecycleManager.registerElement(testElement);
       await lifecycleManager.activateElement(testElement.id);
@@ -218,7 +224,7 @@ describe('ElementLifecycleManager', () => {
       testElement = await lifecycleManager.createElement(
         'test-element',
         'markdown',
-        { primary: { source: 'Test content' } }
+        createTestContent()
       );
       await lifecycleManager.registerElement(testElement);
       await lifecycleManager.activateElement(testElement.id);
@@ -227,7 +233,7 @@ describe('ElementLifecycleManager', () => {
     it('should update element content successfully', async () => {
       const result = await lifecycleManager.updateElementContent(
         testElement.id,
-        { primary: { source: 'Updated content' } }
+        createTestContent('Updated content')
       );
 
       expect(result.success).toBe(true);
@@ -239,7 +245,7 @@ describe('ElementLifecycleManager', () => {
       
       const result = await lifecycleManager.updateElementContent(
         testElement.id,
-        { primary: { source: 'Updated content' } }
+        createTestContent('Updated content')
       );
 
       expect(result.success).toBe(false);
@@ -249,7 +255,7 @@ describe('ElementLifecycleManager', () => {
     it('should fail for non-existent elements', async () => {
       const result = await lifecycleManager.updateElementContent(
         'non-existent',
-        { primary: { source: 'Updated content' } }
+        createTestContent('Updated content')
       );
 
       expect(result.success).toBe(false);
@@ -265,7 +271,7 @@ describe('ElementLifecycleManager', () => {
 
       await lifecycleManager.updateElementContent(
         testElement.id,
-        { primary: { source: 'Updated content' } }
+        createTestContent('Updated content')
       );
 
       // Wait for event processing
@@ -283,7 +289,7 @@ describe('ElementLifecycleManager', () => {
       testElement = await lifecycleManager.createElement(
         'test-element',
         'markdown',
-        { primary: { source: 'Test content' } }
+        createTestContent()
       );
       await lifecycleManager.registerElement(testElement);
       await lifecycleManager.activateElement(testElement.id);
@@ -317,7 +323,7 @@ describe('ElementLifecycleManager', () => {
       testElement = await lifecycleManager.createElement(
         'test-element',
         'markdown',
-        { primary: { source: 'Test content' } }
+        createTestContent()
       );
       await lifecycleManager.registerElement(testElement);
     });
@@ -360,8 +366,8 @@ describe('ElementLifecycleManager', () => {
 
   describe('state management', () => {
     it('should get elements by state', async () => {
-      const element1 = await lifecycleManager.createElement('element-1', 'markdown', { primary: { source: 'Content 1' } });
-      const element2 = await lifecycleManager.createElement('element-2', 'image', { primary: { source: 'image.jpg' } });
+      const element1 = await lifecycleManager.createElement('element-1', 'markdown', createTestContent('Content 1'));
+      const element2 = await lifecycleManager.createElement('element-2', 'image', createTestContent('image.jpg'));
       
       await lifecycleManager.registerElement(element1);
       await lifecycleManager.registerElement(element2);
@@ -377,8 +383,8 @@ describe('ElementLifecycleManager', () => {
     });
 
     it('should provide lifecycle statistics', async () => {
-      const element1 = await lifecycleManager.createElement('element-1', 'markdown', { primary: { source: 'Content 1' } });
-      const element2 = await lifecycleManager.createElement('element-2', 'image', { primary: { source: 'image.jpg' } });
+      const element1 = await lifecycleManager.createElement('element-1', 'markdown', createTestContent('Content 1'));
+      const element2 = await lifecycleManager.createElement('element-2', 'image', createTestContent('image.jpg'));
       
       await lifecycleManager.registerElement(element1);
       await lifecycleManager.activateElement(element1.id);
@@ -403,7 +409,7 @@ describe('ElementLifecycleManager', () => {
         lifecycleEvents.push(event);
       });
 
-      await lifecycleManager.createElement('test-element', 'markdown', { primary: { source: 'Test' } });
+      await lifecycleManager.createElement('test-element', 'markdown', createTestContent('Test'));
 
       expect(lifecycleEvents).toHaveLength(1);
       expect(lifecycleEvents[0].eventType).toBe('created');
@@ -418,11 +424,11 @@ describe('ElementLifecycleManager', () => {
         lifecycleEvents.push(event);
       });
 
-      await lifecycleManager.createElement('test-element-1', 'markdown', { primary: { source: 'Test 1' } });
+      await lifecycleManager.createElement('test-element-1', 'markdown', createTestContent('Test 1'));
       
       unsubscribe();
       
-      await lifecycleManager.createElement('test-element-2', 'markdown', { primary: { source: 'Test 2' } });
+      await lifecycleManager.createElement('test-element-2', 'markdown', createTestContent('Test 2'));
 
       expect(lifecycleEvents).toHaveLength(1);
     });
@@ -434,7 +440,7 @@ describe('ElementLifecycleManager', () => {
         throw new Error('Subscription error');
       });
 
-      await lifecycleManager.createElement('test-element', 'markdown', { primary: { source: 'Test' } });
+      await lifecycleManager.createElement('test-element', 'markdown', createTestContent('Test'));
 
       expect(consoleSpy).toHaveBeenCalledWith(
         'Error in lifecycle callback:',
@@ -447,15 +453,15 @@ describe('ElementLifecycleManager', () => {
 
   describe('destruction', () => {
     it('should destroy lifecycle manager properly', async () => {
-      const element = await lifecycleManager.createElement('test-element', 'markdown', { primary: { source: 'Test' } });
+      const element = await lifecycleManager.createElement('test-element', 'markdown', createTestContent('Test'));
       
       expect(lifecycleManager.getElementState(element.id)).toBe('created');
 
       lifecycleManager.destroy();
 
-      expect(() => {
-        lifecycleManager.createElement('another-element', 'markdown', { primary: { source: 'Test' } });
-      }).toThrow('ElementLifecycleManager has been destroyed');
+      await expect(
+        lifecycleManager.createElement('another-element', 'markdown', createTestContent('Test'))
+      ).rejects.toThrow('ElementLifecycleManager has been destroyed');
     });
   });
 });

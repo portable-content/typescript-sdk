@@ -139,6 +139,7 @@ export function typographyToCss(
 /**
  * Validate that a theme object has all required properties
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function validateTheme(theme: any): theme is Theme {
   if (!theme || typeof theme !== 'object') {
     return false;
@@ -207,6 +208,7 @@ export function getThemeColor(
   fallback: string = '#000000'
 ): string {
   const parts = colorPath.split('.');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let current: any = theme.colors;
 
   for (const part of parts) {

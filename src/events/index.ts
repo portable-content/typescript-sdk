@@ -38,15 +38,14 @@ export type {
 } from './element-lifecycle';
 
 // Default configurations
-export {
-  DEFAULT_EVENT_QUEUE_OPTIONS,
-  DEFAULT_EVENT_MANAGER_OPTIONS,
-} from '../types/events';
+export { DEFAULT_EVENT_QUEUE_OPTIONS, DEFAULT_EVENT_MANAGER_OPTIONS } from '../types/events';
 
 /**
  * Create a new event manager with default configuration
  */
-export function createEventManager(options?: Partial<import('../types/events').EventManagerOptions>) {
+export function createEventManager(
+  options?: Partial<import('../types/events').EventManagerOptions>
+) {
   return new EventManager(options);
 }
 
@@ -60,12 +59,14 @@ export function createElementLifecycleManager(eventManager: EventManager) {
 /**
  * Create a complete event system with manager and lifecycle
  */
-export function createEventSystem(options?: Partial<import('../types/events').EventManagerOptions>) {
+export function createEventSystem(
+  options?: Partial<import('../types/events').EventManagerOptions>
+) {
   const eventManager = createEventManager(options);
   const lifecycleManager = createElementLifecycleManager(eventManager);
 
   return {
     eventManager,
-    lifecycleManager
+    lifecycleManager,
   };
 }

@@ -21,7 +21,7 @@ import type { ElementEvent, ElementEventResult, BatchElementEventResult } from '
  */
 export abstract class BaseTransport implements Transport {
   public abstract readonly name: string;
-  
+
   protected _connectionState: TransportConnectionState = 'disconnected';
   protected connectionOptions: Required<TransportConnectionOptions> = DEFAULT_TRANSPORT_OPTIONS;
   protected connectionStateHandlers = new Set<TransportConnectionStateHandler>();
@@ -135,6 +135,9 @@ export abstract class BaseTransport implements Transport {
     handler: TransportEventHandler,
     options?: { eventTypes?: string[] }
   ): Promise<TransportUnsubscribeFunction> {
+    if (this.isDestroyed) {
+      throw new Error('Transport has been destroyed');
+    }
     if (!this.isConnected) {
       throw new Error('Transport is not connected');
     }
@@ -155,6 +158,9 @@ export abstract class BaseTransport implements Transport {
     handler: TransportEventHandler,
     options?: { eventTypes?: string[] }
   ): Promise<TransportUnsubscribeFunction> {
+    if (this.isDestroyed) {
+      throw new Error('Transport has been destroyed');
+    }
     if (!this.isConnected) {
       throw new Error('Transport is not connected');
     }
@@ -175,6 +181,9 @@ export abstract class BaseTransport implements Transport {
     handler: TransportBatchEventHandler,
     options?: { batchSize?: number; flushInterval?: number }
   ): Promise<TransportUnsubscribeFunction> {
+    if (this.isDestroyed) {
+      throw new Error('Transport has been destroyed');
+    }
     if (!this.isConnected) {
       throw new Error('Transport is not connected');
     }
@@ -216,7 +225,7 @@ export abstract class BaseTransport implements Transport {
   getStats(): TransportStats {
     return {
       ...this.stats,
-      uptime: this.connectionStartTime > 0 ? Date.now() - this.connectionStartTime : 0
+      uptime: this.connectionStartTime > 0 ? Date.now() - this.connectionStartTime : 0,
     };
   }
 
@@ -247,7 +256,9 @@ export abstract class BaseTransport implements Transport {
   protected abstract performConnect(): Promise<void>;
   protected abstract performDisconnect(): Promise<void>;
   protected abstract performSendEvent(event: ElementEvent): Promise<ElementEventResult>;
-  protected abstract performSendBatchEvents(events: ElementEvent[]): Promise<BatchElementEventResult>;
+  protected abstract performSendBatchEvents(
+    events: ElementEvent[]
+  ): Promise<BatchElementEventResult>;
   protected abstract performSubscribeToElement(
     elementId: string,
     handler: TransportEventHandler,
@@ -331,7 +342,7 @@ export abstract class BaseTransport implements Transport {
       connectionErrors: 0,
       messageErrors: 0,
       averageLatency: 0,
-      activeSubscriptions: 0
+      activeSubscriptions: 0,
     };
   }
 }

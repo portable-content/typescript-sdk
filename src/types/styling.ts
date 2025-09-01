@@ -102,6 +102,7 @@ export interface StyleCapabilities {
  * This interface allows the system to work with any styling approach
  * (StyleSheet, Unistyles, NativeWind, Styled Components, etc.)
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface StyleAdapter<TStyle = any, TTheme = Theme> {
   /** Unique name for this adapter */
   name: string;
@@ -113,18 +114,22 @@ export interface StyleAdapter<TStyle = any, TTheme = Theme> {
   theme: TTheme;
 
   /** Core method to create styles from a style definition */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createStyles: (styleDefinition: any, theme?: TTheme) => TStyle;
 
   /** Core method to combine multiple styles */
   combineStyles: (...styles: TStyle[]) => TStyle;
 
   /** Optional method for responsive styles (if supported) */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createResponsiveStyles?: (styleDefinition: any, breakpoints?: any) => TStyle;
 
   /** Optional method for animated styles (if supported) */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createAnimatedStyles?: (styleDefinition: any) => TStyle;
 
   /** Optional method for variant styles (if supported) */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createVariantStyles?: (variants: Record<string, any>) => TStyle;
 
   /** Lifecycle hook called when adapter is mounted */
@@ -249,10 +254,12 @@ export const darkTheme: Theme = {
 /**
  * Type helper to extract style type from adapter
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type StyleFromAdapter<T extends StyleAdapter> = T extends StyleAdapter<infer S> ? S : any;
 
 /**
  * Type helper to extract theme type from adapter
  */
 export type ThemeFromAdapter<T extends StyleAdapter> =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   T extends StyleAdapter<any, infer TH> ? TH : Theme;

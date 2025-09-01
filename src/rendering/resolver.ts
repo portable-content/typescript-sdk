@@ -78,6 +78,7 @@ export class DefaultContentResolver implements ContentResolver {
 
     if (!result.success) {
       const error = new Error(`Content resolution failed: ${result.error.message}`);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (error as any).cause = result.error.cause;
       throw error;
     }

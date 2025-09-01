@@ -15,7 +15,7 @@ import type { ElementEvent, ElementEventResult, BatchElementEventResult } from '
  */
 export class MockTransport extends BaseTransport {
   public readonly name = 'mock';
-  
+
   private eventHandlers = new Set<TransportEventHandler>();
   private batchEventHandlers = new Set<TransportBatchEventHandler>();
   private elementSubscriptions = new Map<string, Set<TransportEventHandler>>();
@@ -25,7 +25,7 @@ export class MockTransport extends BaseTransport {
    */
   protected async performConnect(): Promise<void> {
     // Simulate connection delay
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
   }
 
   /**
@@ -42,12 +42,12 @@ export class MockTransport extends BaseTransport {
    */
   protected async performSendEvent(event: ElementEvent): Promise<ElementEventResult> {
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 5));
-    
+    await new Promise((resolve) => setTimeout(resolve, 5));
+
     return {
       success: true,
       elementId: event.elementId,
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
     };
   }
 
@@ -56,16 +56,16 @@ export class MockTransport extends BaseTransport {
    */
   protected async performSendBatchEvents(events: ElementEvent[]): Promise<BatchElementEventResult> {
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 10));
-    
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
     return {
-      successful: events.map(e => e.elementId),
+      successful: events.map((e) => e.elementId),
       failed: [],
       queued: [],
       metadata: {
         totalEvents: events.length,
-        processingTime: 10
-      }
+        processingTime: 10,
+      },
     };
   }
 
@@ -82,7 +82,7 @@ export class MockTransport extends BaseTransport {
       handlers = new Set();
       this.elementSubscriptions.set(elementId, handlers);
     }
-    
+
     handlers.add(handler);
 
     return () => {
@@ -173,6 +173,7 @@ export class MockTransport extends BaseTransport {
    */
   simulateConnectionError(error: Error): void {
     this.updateConnectionState('error', error);
+    this.handleError(error);
   }
 
   /**

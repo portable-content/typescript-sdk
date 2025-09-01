@@ -7,7 +7,7 @@ import type { ElementEvent, ElementEventResult, BatchElementEventResult } from '
 /**
  * Transport connection states
  */
-export type TransportConnectionState = 
+export type TransportConnectionState =
   | 'disconnected'
   | 'connecting'
   | 'connected'
@@ -19,14 +19,14 @@ export type TransportConnectionState =
  * Transport message types
  */
 export type TransportMessageType =
-  | 'event'           // Single element event
-  | 'batch_event'     // Batch of element events
-  | 'subscription'    // Event subscription request
-  | 'unsubscription'  // Event unsubscription request
-  | 'ping'           // Connection health check
-  | 'pong'           // Ping response
-  | 'error'          // Error message
-  | 'ack';           // Acknowledgment
+  | 'event' // Single element event
+  | 'batch_event' // Batch of element events
+  | 'subscription' // Event subscription request
+  | 'unsubscription' // Event unsubscription request
+  | 'ping' // Connection health check
+  | 'pong' // Ping response
+  | 'error' // Error message
+  | 'ack'; // Acknowledgment
 
 /**
  * Transport message structure
@@ -150,10 +150,10 @@ export interface TransportUnsubscribeFunction {
 export interface Transport {
   /** Transport name/type */
   readonly name: string;
-  
+
   /** Current connection state */
   readonly connectionState: TransportConnectionState;
-  
+
   /** Whether the transport is connected */
   readonly isConnected: boolean;
 
@@ -255,7 +255,7 @@ export interface TransportStats {
 export interface TransportFactory {
   /** Factory name */
   readonly name: string;
-  
+
   /** Supported transport protocols */
   readonly supportedProtocols: string[];
 
@@ -308,11 +308,11 @@ export const DEFAULT_TRANSPORT_OPTIONS: Required<TransportConnectionOptions> = {
   retry: {
     maxAttempts: 3,
     backoffMs: 1000,
-    maxBackoffMs: 30000
+    maxBackoffMs: 30000,
   },
   auth: {},
   headers: {},
-  metadata: {}
+  metadata: {},
 };
 
 /**
@@ -322,7 +322,7 @@ export const TRANSPORT_MESSAGE_PRIORITIES = {
   LOW: 'low',
   NORMAL: 'normal',
   HIGH: 'high',
-  IMMEDIATE: 'immediate'
+  IMMEDIATE: 'immediate',
 } as const;
 
 /**
@@ -335,5 +335,5 @@ export const TRANSPORT_PROTOCOLS = {
   HTTPS: 'https',
   GRAPHQL: 'graphql',
   GRAPHQL_WS: 'graphql-ws',
-  MCP: 'mcp'
+  MCP: 'mcp',
 } as const;

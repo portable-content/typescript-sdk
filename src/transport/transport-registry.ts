@@ -91,7 +91,10 @@ export const transportRegistry = new DefaultTransportRegistry();
 /**
  * Create a transport from a URL
  */
-export function createTransport(url: string, options?: TransportConnectionOptions): Transport | null {
+export function createTransport(
+  url: string,
+  options?: TransportConnectionOptions
+): Transport | null {
   return transportRegistry.create(url, options);
 }
 

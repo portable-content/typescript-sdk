@@ -2,11 +2,7 @@
  * @fileoverview Event queue implementation for batching and prioritizing element events
  */
 
-import type {
-  ElementEvent,
-  BatchElementEventResult,
-  EventQueueOptions,
-} from '../types/events';
+import type { ElementEvent, BatchElementEventResult, EventQueueOptions } from '../types/events';
 import { DEFAULT_EVENT_QUEUE_OPTIONS } from '../types/events';
 
 /**
@@ -21,9 +17,9 @@ export class EventQueue {
 
   constructor(options: Partial<EventQueueOptions> = {}) {
     this.options = { ...DEFAULT_EVENT_QUEUE_OPTIONS, ...options };
-    
+
     // Initialize priority queues
-    this.options.priorityLevels.forEach(priority => {
+    this.options.priorityLevels.forEach((priority) => {
       this.queues.set(priority, []);
     });
   }
@@ -34,7 +30,7 @@ export class EventQueue {
   enqueue(event: ElementEvent): boolean {
     const priority = event.metadata.priority;
     const queue = this.queues.get(priority);
-    
+
     if (!queue) {
       console.warn(`Unknown priority level: ${priority}`);
       return false;
@@ -51,14 +47,14 @@ export class EventQueue {
     if (this.options.deduplicateEvents) {
       const dedupeKey = this.getDeduplicationKey(event);
       const existingEvent = this.eventDeduplicationMap.get(dedupeKey);
-      
+
       if (existingEvent) {
         // Update existing event with newer data
         Object.assign(existingEvent.data, event.data);
         existingEvent.metadata.timestamp = event.metadata.timestamp;
         return true;
       }
-      
+
       this.eventDeduplicationMap.set(dedupeKey, event);
     }
 
@@ -67,20 +63,22 @@ export class EventQueue {
 
     // Schedule flush if not already scheduled
     this.scheduleFlush();
-    
+
     return true;
   }
 
   /**
    * Process all queued events in priority order
    */
-  async flush(processor: (events: ElementEvent[]) => Promise<BatchElementEventResult>): Promise<BatchElementEventResult> {
+  async flush(
+    processor: (events: ElementEvent[]) => Promise<BatchElementEventResult>
+  ): Promise<BatchElementEventResult> {
     if (this.isProcessing) {
       return {
         successful: [],
         failed: [],
         queued: [],
-        metadata: { totalEvents: 0, processingTime: 0 }
+        metadata: { totalEvents: 0, processingTime: 0 },
       };
     }
 
@@ -96,8 +94,9 @@ export class EventQueue {
 
       // Collect events in priority order
       const eventsToProcess: ElementEvent[] = [];
-      
-      for (const priority of this.options.priorityLevels.reverse()) { // Process high priority first
+
+      for (const priority of this.options.priorityLevels.reverse()) {
+        // Process high priority first
         const queue = this.queues.get(priority);
         if (queue && queue.length > 0) {
           eventsToProcess.push(...queue);
@@ -113,22 +112,21 @@ export class EventQueue {
           successful: [],
           failed: [],
           queued: [],
-          metadata: { totalEvents: 0, processingTime: Date.now() - startTime }
+          metadata: { totalEvents: 0, processingTime: Date.now() - startTime },
         };
       }
 
       // Process events
       const result = await processor(eventsToProcess);
-      
+
       return {
         ...result,
         metadata: {
           ...result.metadata,
           totalEvents: eventsToProcess.length,
-          processingTime: Date.now() - startTime
-        }
+          processingTime: Date.now() - startTime,
+        },
       };
-
     } finally {
       this.isProcessing = false;
     }
@@ -164,7 +162,7 @@ export class EventQueue {
       queue.length = 0;
     }
     this.eventDeduplicationMap.clear();
-    
+
     if (this.flushTimer) {
       clearTimeout(this.flushTimer);
       this.flushTimer = null;
