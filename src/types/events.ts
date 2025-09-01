@@ -66,7 +66,7 @@ export interface ElementEventMetadata {
   /** Event timestamp */
   timestamp: number;
   /** Source of the event */
-  source: 'ai' | 'gui' | 'api' | 'user' | 'system' | 'custom-protocol';
+  source: string;
   /** Event priority level */
   priority: 'low' | 'normal' | 'high' | 'immediate';
   /** Correlation ID for tracking related events */

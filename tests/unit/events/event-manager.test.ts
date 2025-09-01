@@ -5,30 +5,16 @@
 import { EventManager } from '../../../src/events/event-manager';
 import type { Element } from '../../../src/types/core';
 import type { ElementEvent } from '../../../src/types/events';
+import { createTestElement, createTestElementContent, createTestElementEvent, createTestElementEventWithPayload, createTestEventManagerOptions } from '../../__helpers__/test-factories';
 
 describe('EventManager', () => {
   let eventManager: EventManager;
   let testElement: Element;
 
   beforeEach(() => {
-    eventManager = new EventManager({
-      queueOptions: {
-        flushInterval: 10, // Faster for testing
-        maxQueueSize: 100
-      }
-    });
+    eventManager = new EventManager(createTestEventManagerOptions());
 
-    testElement = {
-      id: 'test-element',
-      kind: 'markdown',
-      content: {
-        primary: { source: 'Test content' }
-      },
-      metadata: {
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    };
+    testElement = createTestElement();
   });
 
   afterEach(() => {
@@ -85,17 +71,14 @@ describe('EventManager', () => {
     });
 
     it('should send events successfully', async () => {
-      const event: ElementEvent = {
+      const event = createTestElementEventWithPayload('Updated content', {
         elementId: testElement.id,
-        elementType: 'markdown',
-        eventType: 'updatePayload',
-        data: { payload: { source: 'Updated content' } },
         metadata: {
           timestamp: Date.now(),
           source: 'test',
           priority: 'normal'
         }
-      };
+      });
 
       const result = await eventManager.sendEvent(event);
       
@@ -125,27 +108,23 @@ describe('EventManager', () => {
 
     it('should handle batch events', async () => {
       const events: ElementEvent[] = [
-        {
+        createTestElementEventWithPayload('Content 1', {
           elementId: testElement.id,
-          elementType: 'markdown',
-          eventType: 'updatePayload',
-          data: { payload: { source: 'Content 1' } },
           metadata: { timestamp: Date.now(), source: 'test', priority: 'normal' }
-        },
-        {
+        }),
+        createTestElementEvent({
           elementId: testElement.id,
-          elementType: 'markdown',
           eventType: 'updateProps',
           data: { props: { title: 'Test Title' } },
           metadata: { timestamp: Date.now(), source: 'test', priority: 'normal' }
-        }
+        })
       ];
 
       const result = await eventManager.sendBatchEvents(events);
       
       expect(result.successful).toHaveLength(2);
       expect(result.failed).toHaveLength(0);
-      expect(result.metadata.totalEvents).toBe(2);
+      expect(result.metadata?.totalEvents).toBe(2);
     });
 
     it('should handle mixed success/failure in batch', async () => {
@@ -282,6 +261,9 @@ describe('EventManager', () => {
         metadata: { timestamp: Date.now(), source: 'test', priority: 'normal' }
       });
 
+      // Wait for event processing
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       unsubscribe();
 
       // Send event after unsubscribing
@@ -352,12 +334,13 @@ describe('EventManager', () => {
     });
 
     it('should get all event history', async () => {
-      const anotherElement: Element = {
+      const anotherElement = createTestElement({
         id: 'another-element',
         kind: 'image',
-        content: { primary: { source: 'image.jpg' } },
-        metadata: { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
-      };
+        content: createTestElementContent({
+          primary: { type: 'external', mediaType: 'image/jpeg', source: 'image.jpg' }
+        })
+      });
 
       eventManager.registerElement(anotherElement);
 
@@ -415,14 +398,14 @@ describe('EventManager', () => {
   });
 
   describe('destruction', () => {
-    it('should destroy properly', () => {
+    it('should destroy properly', async () => {
       eventManager.registerElement(testElement);
       expect(eventManager.getRegisteredElements()).toHaveLength(1);
 
       eventManager.destroy();
       
       expect(() => eventManager.registerElement(testElement)).toThrow();
-      expect(() => eventManager.sendEvent({} as any)).toThrow();
+      await expect(eventManager.sendEvent({} as any)).rejects.toThrow();
       expect(() => eventManager.subscribe('test', () => {})).toThrow();
     });
   });

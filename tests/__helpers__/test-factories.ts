@@ -62,6 +62,22 @@ export function createTestElementEvent(overrides: Partial<ElementEvent> = {}): E
 }
 
 /**
+ * Create a test ElementEvent with proper payload
+ */
+export function createTestElementEventWithPayload(source: string = 'Test content', overrides: Partial<ElementEvent> = {}): ElementEvent {
+  return createTestElementEvent({
+    data: {
+      payload: {
+        type: 'inline',
+        mediaType: 'text/plain',
+        source
+      }
+    },
+    ...overrides
+  });
+}
+
+/**
  * Create test EventQueueOptions
  */
 export function createTestEventQueueOptions(overrides: Partial<EventQueueOptions> = {}): EventQueueOptions {

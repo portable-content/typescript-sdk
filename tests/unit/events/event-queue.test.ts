@@ -4,7 +4,7 @@
 
 import { EventQueue } from '../../../src/events/event-queue';
 import type { ElementEvent, BatchElementEventResult } from '../../../src/types/events';
-import { createTestElementEvent, createTestEventQueueOptions } from '../../__helpers__/test-factories';
+import { createTestElementEvent, createTestElementEventWithPayload, createTestEventQueueOptions } from '../../__helpers__/test-factories';
 
 describe('EventQueue', () => {
   let eventQueue: EventQueue;
@@ -42,15 +42,7 @@ describe('EventQueue', () => {
 
   describe('enqueue', () => {
     it('should enqueue events successfully', () => {
-      const event = createTestElementEvent({
-        data: {
-          payload: {
-            type: 'inline',
-            mediaType: 'text/plain',
-            source: 'test'
-          }
-        }
-      });
+      const event = createTestElementEventWithPayload('test');
 
       const result = eventQueue.enqueue(event);
       expect(result).toBe(true);
@@ -131,23 +123,12 @@ describe('EventQueue', () => {
     });
 
     it('should deduplicate events when enabled', () => {
-      const dedupeQueue = new EventQueue({ deduplicateEvents: true });
+      const dedupeQueue = new EventQueue(createTestEventQueueOptions({ deduplicateEvents: true }));
 
-      const event1: ElementEvent = {
-        elementId: 'test-element',
-        elementType: 'markdown',
-        eventType: 'updatePayload',
-        data: { payload: { source: 'original' } },
-        metadata: { timestamp: Date.now(), source: 'test', priority: 'normal' }
-      };
-
-      const event2: ElementEvent = {
-        elementId: 'test-element',
-        elementType: 'markdown',
-        eventType: 'updatePayload',
-        data: { payload: { source: 'updated' } },
+      const event1 = createTestElementEventWithPayload('original');
+      const event2 = createTestElementEventWithPayload('updated', {
         metadata: { timestamp: Date.now() + 100, source: 'test', priority: 'normal' }
-      };
+      });
 
       expect(dedupeQueue.enqueue(event1)).toBe(true);
       expect(dedupeQueue.enqueue(event2)).toBe(true);
@@ -258,7 +239,7 @@ describe('EventQueue', () => {
       const result = await eventQueue.flush(processor);
 
       expect(processor).not.toHaveBeenCalled();
-      expect(result.metadata.totalEvents).toBe(0);
+      expect(result.metadata?.totalEvents).toBe(0);
     });
 
     it('should prevent concurrent processing', async () => {
