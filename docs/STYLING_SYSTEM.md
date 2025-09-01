@@ -1,6 +1,6 @@
 # Styling System
 
-The Portable Content SDK v0.2.0 introduces a comprehensive styling system that enables framework-agnostic styling with support for multiple styling approaches.
+The Portable Content SDK v0.3.0 includes a comprehensive styling system that enables framework-agnostic styling with support for multiple styling approaches.
 
 ## Overview
 
