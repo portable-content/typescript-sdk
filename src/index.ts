@@ -25,8 +25,11 @@ export * from './utils';
 // Styling utilities
 export * from './styling';
 
-// Event system (will be implemented in Phase 2)
-// export * from './events';
+// Event system
+export * from './events';
+
+// Transport layer
+export * from './transport';
 
 // Transport layer (will be implemented in Phase 2)
 // export * from './transport';
